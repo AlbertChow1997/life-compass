@@ -4,6 +4,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### User-uploaded content (runtime, not source) ###
+/uploads/
+
 ### STS ###
 .apt_generated
 .classpath
