@@ -1,13 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { useGoogleIdentityScript } from '../hooks/useGoogleIdentityScript'
 import type { LoginResponse } from '../types'
 
-type Tab = 'credentials' | 'phone'
+type Tab = 'google' | 'credentials' | 'phone'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function LoginPage() {
-  const [tab, setTab] = useState<Tab>('credentials')
+  const [tab, setTab] = useState<Tab>('google')
   const { login } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -20,10 +23,39 @@ export default function LoginPage() {
   const [codeSent, setCodeSent] = useState(false)
   const [sending, setSending] = useState(false)
 
+  const googleScriptReady = useGoogleIdentityScript()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
+
   function handleSuccess(res: LoginResponse) {
     login(res.token, { userId: res.userId, nickName: res.nickName, role: res.role })
     navigate('/')
   }
+
+  async function handleGoogleCredential(response: { credential: string }) {
+    setError(null)
+    try {
+      const res = await api.post<ApiResult<LoginResponse>>('/auth/google', { idToken: response.credential })
+      if (res.data.data) handleSuccess(res.data.data)
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Google sign-in failed'))
+    }
+  }
+
+  // Renders Google's own button into googleButtonRef once its script has loaded
+  // and we're on the Google tab. Re-runs if the user switches tabs away and back.
+  useEffect(() => {
+    if (tab !== 'google' || !googleScriptReady || !googleButtonRef.current || !GOOGLE_CLIENT_ID) return
+    window.google!.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+    })
+    window.google!.accounts.id.renderButton(googleButtonRef.current, {
+      theme: 'outline',
+      size: 'large',
+      width: 320,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, googleScriptReady])
 
   async function submitCredentials(e: FormEvent) {
     e.preventDefault()
@@ -74,11 +106,11 @@ export default function LoginPage() {
 
       <div className="tabs">
         <button
-          className={tab === 'credentials' ? 'tab tab-active' : 'tab'}
+          className={tab === 'google' ? 'tab tab-active' : 'tab'}
           type="button"
-          onClick={() => switchTab('credentials')}
+          onClick={() => switchTab('google')}
         >
-          Merchant / Admin
+          Google
         </button>
         <button
           className={tab === 'phone' ? 'tab tab-active' : 'tab'}
@@ -87,9 +119,26 @@ export default function LoginPage() {
         >
           Phone (SMS)
         </button>
+        <button
+          className={tab === 'credentials' ? 'tab tab-active' : 'tab'}
+          type="button"
+          onClick={() => switchTab('credentials')}
+        >
+          Merchant / Admin
+        </button>
       </div>
 
       {error && <div className="notice notice-error">{error}</div>}
+
+      {tab === 'google' && (
+        <div className="google-tab">
+          {!GOOGLE_CLIENT_ID && (
+            <p className="muted">Google sign-in isn't configured in this environment yet.</p>
+          )}
+          {GOOGLE_CLIENT_ID && !googleScriptReady && <p className="muted">Loading Google Sign-In…</p>}
+          <div ref={googleButtonRef} />
+        </div>
+      )}
 
       {tab === 'credentials' && (
         <form className="auth-form" onSubmit={submitCredentials}>

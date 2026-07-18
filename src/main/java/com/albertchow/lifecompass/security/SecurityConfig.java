@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/google", "/api/auth/sms/code", "/api/auth/sms/login", "/api/auth/login")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/config").permitAll()
                         // Public browsing: shop directory, categories, posts, on-shelf vouchers (reqs 2, 4, 5).
                         .requestMatchers(HttpMethod.GET,
                                 "/api/shop/**", "/api/shop-type/**", "/api/blog/**", "/api/voucher/**")

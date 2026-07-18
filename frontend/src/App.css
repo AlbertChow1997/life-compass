@@ -350,6 +350,12 @@
   cursor: not-allowed;
 }
 
+/* ---- google sign-in tab ---- */
+.google-tab {
+  min-height: 44px;
+  margin-bottom: 24px;
+}
+
 /* ---- tabs (login page) ---- */
 .tabs {
   display: flex;

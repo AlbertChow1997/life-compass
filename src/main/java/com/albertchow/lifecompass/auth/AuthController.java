@@ -1,5 +1,6 @@
 package com.albertchow.lifecompass.auth;
 
+import com.albertchow.lifecompass.auth.dto.AuthConfigResponse;
 import com.albertchow.lifecompass.auth.dto.CredentialLoginRequest;
 import com.albertchow.lifecompass.auth.dto.GoogleLoginRequest;
 import com.albertchow.lifecompass.auth.dto.LoginResponse;
@@ -10,6 +11,7 @@ import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.User;
 import com.albertchow.lifecompass.mapper.UserMapper;
 import com.albertchow.lifecompass.security.LoginUser;
+import com.albertchow.lifecompass.security.TwilioSmsSender;
 import com.albertchow.lifecompass.security.UserContext;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserMapper userMapper;
+    private final TwilioSmsSender smsSender;
+
+    /** Lets the login page show accurate copy without exposing any Twilio secrets. */
+    @GetMapping("/config")
+    public Result<AuthConfigResponse> config() {
+        return Result.ok(new AuthConfigResponse(smsSender.isConfigured()));
+    }
 
     /** Requirement 1: Google login. */
     @PostMapping("/google")
