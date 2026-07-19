@@ -350,35 +350,99 @@
   cursor: not-allowed;
 }
 
-/* ---- google sign-in tab ---- */
+/* ---- google sign-in button slot ---- */
 .google-tab {
   min-height: 44px;
-  margin-bottom: 24px;
 }
 
-/* ---- tabs (login page) ---- */
-.tabs {
+/* ---- login/register page: centered column, everything the same width ---- */
+.auth-page {
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.auth-page .hero {
+  text-align: center;
+}
+
+.auth-page .account-toggle {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
+  width: fit-content;
+  margin: 0 auto 24px;
 }
 
-.tab {
+.auth-page .auth-form {
+  width: 100%;
+  max-width: none;
+}
+
+.auth-page .alt-login {
+  width: 100%;
+}
+
+.auth-page .btn-primary,
+.auth-page .alt-login > .btn-ghost {
+  width: 100%;
+}
+
+.auth-page .google-tab {
+  width: 100%;
+}
+
+/* ---- account type toggle (login page) ---- */
+.account-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 24px;
+  background: var(--surface);
+}
+
+.segment {
   border: none;
   background: none;
-  padding: 10px 16px;
+  padding: 8px 18px;
+  border-radius: 999px;
   color: var(--text);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
 }
 
-.tab-active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+.segment-active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ---- "or" divider between the password form and alt sign-in methods ---- */
+.divider-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 20px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.divider-or::before,
+.divider-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.alt-login {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.register-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
 }
 
 /* ---- forms ---- */
@@ -509,9 +573,78 @@
   font: inherit;
 }
 
-/* ---- navbar auth state ---- */
+/* ---- navbar auth state: avatar + dropdown ---- */
+.user-menu {
+  position: relative;
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  font: inherit;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.user-trigger:hover {
+  background: var(--muted-bg);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+  font-size: 14px;
+}
+
 .nav-user {
-  margin-right: 4px;
+  font-weight: 500;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.user-dropdown-signout {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.user-dropdown-signout:hover {
+  background: var(--muted-bg);
+  color: var(--accent);
 }
 
 /* ---- responsive: mobile ---- */

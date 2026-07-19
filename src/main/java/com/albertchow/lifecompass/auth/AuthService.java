@@ -1,6 +1,7 @@
 package com.albertchow.lifecompass.auth;
 
 import com.albertchow.lifecompass.auth.dto.LoginResponse;
+import com.albertchow.lifecompass.auth.dto.RegisterRequest;
 import com.albertchow.lifecompass.common.enums.Role;
 import com.albertchow.lifecompass.common.exception.BusinessException;
 import com.albertchow.lifecompass.entity.User;
@@ -101,16 +102,31 @@ public class AuthService {
         return issueToken(user);
     }
 
-    /** Requirement 7: merchant/admin credential login. */
+    /** Email+password login, available to any self-registered account regardless of role. */
     public LoginResponse loginWithCredentials(String email, String rawPassword) {
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
         if (user == null || user.getPassword() == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new BusinessException("Invalid email or password");
         }
-        Role role = Role.valueOf(user.getRole());
-        if (role == Role.USER) {
-            throw new BusinessException("Regular users must sign in with Google or SMS");
+        return issueToken(user);
+    }
+
+    /** Self-registration with email+password. Only USER and MERCHANT are self-selectable; see {@link RegisterRequest}. */
+    public LoginResponse register(RegisterRequest request) {
+        boolean emailTaken = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, request.email())) != null;
+        if (emailTaken) {
+            throw new BusinessException("Email already in use");
         }
+
+        User user = new User();
+        user.setEmail(request.email());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setNickName(request.nickName());
+        user.setIcon("");
+        user.setCity(request.city() != null ? request.city() : "");
+        user.setRole(request.role());
+        user.setStatus(1);
+        userMapper.insert(user);
         return issueToken(user);
     }
 

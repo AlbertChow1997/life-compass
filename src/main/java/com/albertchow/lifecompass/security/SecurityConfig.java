@@ -46,9 +46,10 @@ public class SecurityConfig {
                         // Static images (shop photos, uploaded post photos) must be publicly
                         // readable: <img> tags never send an Authorization header.
                         .requestMatchers(HttpMethod.GET, "/images/**", "/uploads/**").permitAll()
-                        // Only the actual login endpoints are public; /api/auth/me requires a valid JWT.
+                        // Only the actual login/register endpoints are public; /api/auth/me requires a valid JWT.
                         .requestMatchers(HttpMethod.POST,
-                                "/api/auth/google", "/api/auth/sms/code", "/api/auth/sms/login", "/api/auth/login")
+                                "/api/auth/google", "/api/auth/sms/code", "/api/auth/sms/login",
+                                "/api/auth/login", "/api/auth/register")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/config").permitAll()
                         // Public browsing: shop directory, categories, posts, on-shelf vouchers (reqs 2, 4, 5).

@@ -29,13 +29,16 @@ public class User {
     /** Google subject id (sub claim). */
     private String googleId;
 
-    /** BCrypt hash for merchant/admin credential login; never serialized. */
+    /** BCrypt hash, set for any self-registered account; never serialized. */
     @JsonIgnore
     private String password;
 
     private String nickName;
 
     private String icon;
+
+    /** City, collected at registration. */
+    private String city;
 
     /** USER | MERCHANT | ADMIN. */
     private String role;

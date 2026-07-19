@@ -17,18 +17,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- -----------------------------------------------------------------------------
 -- user — accounts for regular users, merchants and admins.
--- Regular users sign in via Google (email/google_id) or Twilio SMS (phone).
--- Merchant/admin accounts may also use a password credential login.
+-- Any role may register with email+password; regular users can additionally
+-- sign in via Google (email/google_id) or Twilio SMS (phone).
 -- -----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
     `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
     `phone`       VARCHAR(20)     DEFAULT NULL COMMENT 'Phone number (E.164, e.g. +353...) — Twilio SMS login',
-    `email`       VARCHAR(128)    DEFAULT NULL COMMENT 'Email address — Google login',
+    `email`       VARCHAR(128)    DEFAULT NULL COMMENT 'Email address — Google login / credential login',
     `google_id`   VARCHAR(64)     DEFAULT NULL COMMENT 'Google subject id (sub claim)',
-    `password`    VARCHAR(128)    DEFAULT NULL COMMENT 'BCrypt hash — merchant/admin credential login only',
+    `password`    VARCHAR(128)    DEFAULT NULL COMMENT 'BCrypt hash — set for any self-registered account',
     `nick_name`   VARCHAR(32)     NOT NULL DEFAULT '' COMMENT 'Display name',
     `icon`        VARCHAR(255)    NOT NULL DEFAULT '' COMMENT 'Avatar URL',
+    `city`        VARCHAR(64)     NOT NULL DEFAULT '' COMMENT 'City, collected at registration',
     `role`        VARCHAR(16)     NOT NULL DEFAULT 'USER' COMMENT 'USER | MERCHANT | ADMIN',
     `status`      TINYINT         NOT NULL DEFAULT 1 COMMENT '1 active, 0 banned',
     `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

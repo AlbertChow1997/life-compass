@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useGoogleIdentityScript } from '../hooks/useGoogleIdentityScript'
 import type { LoginResponse } from '../types'
 
-type Tab = 'google' | 'credentials' | 'phone'
+type AccountType = 'user' | 'business'
+type PhoneStep = 'closed' | 'phone' | 'code'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function LoginPage() {
-  const [tab, setTab] = useState<Tab>('google')
+  const [accountType, setAccountType] = useState<AccountType>('user')
   const { login } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -18,16 +19,24 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
+  const [phoneStep, setPhoneStep] = useState<PhoneStep>('closed')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
-  const [codeSent, setCodeSent] = useState(false)
   const [sending, setSending] = useState(false)
 
   const googleScriptReady = useGoogleIdentityScript()
   const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  function handleSuccess(res: LoginResponse) {
-    login(res.token, { userId: res.userId, nickName: res.nickName, role: res.role })
+  const [smsConfigured, setSmsConfigured] = useState<boolean | null>(null)
+  useEffect(() => {
+    api
+      .get<ApiResult<{ smsConfigured: boolean }>>('/auth/config')
+      .then((res) => setSmsConfigured(res.data.data?.smsConfigured ?? false))
+      .catch(() => setSmsConfigured(false))
+  }, [])
+
+  async function handleSuccess(res: LoginResponse) {
+    await login(res.token)
     navigate('/')
   }
 
@@ -41,10 +50,10 @@ export default function LoginPage() {
     }
   }
 
-  // Renders Google's own button into googleButtonRef once its script has loaded
-  // and we're on the Google tab. Re-runs if the user switches tabs away and back.
+  // Renders Google's own button into googleButtonRef once its script has loaded.
+  // Re-runs whenever the button becomes visible again (account type switch).
   useEffect(() => {
-    if (tab !== 'google' || !googleScriptReady || !googleButtonRef.current || !GOOGLE_CLIENT_ID) return
+    if (!googleScriptReady || !googleButtonRef.current || !GOOGLE_CLIENT_ID) return
     window.google!.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCredential,
@@ -52,10 +61,13 @@ export default function LoginPage() {
     window.google!.accounts.id.renderButton(googleButtonRef.current, {
       theme: 'outline',
       size: 'large',
-      width: 320,
+      // Match whatever width the surrounding column actually renders at
+      // (Google's API wants a concrete pixel number, not a percentage),
+      // capped at Google's documented max of 400.
+      width: Math.min(googleButtonRef.current.offsetWidth, 400),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, googleScriptReady])
+  }, [accountType, googleScriptReady])
 
   async function submitCredentials(e: FormEvent) {
     e.preventDefault()
@@ -74,7 +86,7 @@ export default function LoginPage() {
     setSending(true)
     try {
       await api.post('/auth/sms/code', { phone })
-      setCodeSent(true)
+      setPhoneStep('code')
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not send code'))
     } finally {
@@ -93,9 +105,10 @@ export default function LoginPage() {
     }
   }
 
-  function switchTab(next: Tab) {
-    setTab(next)
+  function switchAccountType(next: AccountType) {
+    setAccountType(next)
     setError(null)
+    setPhoneStep('closed')
   }
 
   return (
@@ -104,25 +117,18 @@ export default function LoginPage() {
         <h1>Sign in</h1>
       </div>
 
-      <div className="tabs">
+      <div className="account-toggle">
         <button
-          className={tab === 'google' ? 'tab tab-active' : 'tab'}
+          className={accountType === 'user' ? 'segment segment-active' : 'segment'}
           type="button"
-          onClick={() => switchTab('google')}
+          onClick={() => switchAccountType('user')}
         >
-          Google
+          User
         </button>
         <button
-          className={tab === 'phone' ? 'tab tab-active' : 'tab'}
+          className={accountType === 'business' ? 'segment segment-active' : 'segment'}
           type="button"
-          onClick={() => switchTab('phone')}
-        >
-          Phone (SMS)
-        </button>
-        <button
-          className={tab === 'credentials' ? 'tab tab-active' : 'tab'}
-          type="button"
-          onClick={() => switchTab('credentials')}
+          onClick={() => switchAccountType('business')}
         >
           Merchant / Admin
         </button>
@@ -130,7 +136,36 @@ export default function LoginPage() {
 
       {error && <div className="notice notice-error">{error}</div>}
 
-      {tab === 'google' && (
+      <form className="auth-form" onSubmit={submitCredentials}>
+        <label>
+          Email
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label>
+          Password
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </label>
+        <button className="btn-primary" type="submit">
+          Sign in
+        </button>
+        {accountType === 'business' ? (
+          <p className="muted">
+            Try <code>admin@lifecompass.ie</code> / <code>password</code> (admin) or{' '}
+            <code>olivia@templebar.ie</code> / <code>password</code> (merchant).
+          </p>
+        ) : (
+          <p className="muted">
+            No account yet? Use Google or phone below, or <Link to="/register">register</Link> with a
+            password.
+          </p>
+        )}
+      </form>
+
+      <div className="divider-or">
+        <span>or</span>
+      </div>
+
+      <div className="alt-login">
         <div className="google-tab">
           {!GOOGLE_CLIENT_ID && (
             <p className="muted">Google sign-in isn't configured in this environment yet.</p>
@@ -138,62 +173,70 @@ export default function LoginPage() {
           {GOOGLE_CLIENT_ID && !googleScriptReady && <p className="muted">Loading Google Sign-In…</p>}
           <div ref={googleButtonRef} />
         </div>
-      )}
 
-      {tab === 'credentials' && (
-        <form className="auth-form" onSubmit={submitCredentials}>
-          <label>
-            Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label>
-            Password
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </label>
-          <button className="btn-primary" type="submit">
-            Sign in
+        {phoneStep === 'closed' && (
+          <button className="btn-ghost" type="button" onClick={() => setPhoneStep('phone')}>
+            Sign in with Phone (SMS)
           </button>
-          <p className="muted">
-            Try <code>admin@lifecompass.ie</code> / <code>password</code> (admin) or{' '}
-            <code>olivia@templebar.ie</code> / <code>password</code> (merchant).
-          </p>
-        </form>
-      )}
+        )}
 
-      {tab === 'phone' && !codeSent && (
-        <form className="auth-form" onSubmit={sendCode}>
-          <label>
-            Phone number
-            <input
-              type="tel"
-              placeholder="+353851234567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-          </label>
-          <button className="btn-primary" type="submit" disabled={sending}>
-            {sending ? 'Sending…' : 'Send code'}
-          </button>
-          <p className="muted">
-            SMS isn't configured in this dev environment — the code is printed to the backend
-            console log instead of being texted.
-          </p>
-        </form>
-      )}
+        {phoneStep === 'phone' && (
+          <form className="auth-form" onSubmit={sendCode}>
+            <label>
+              Phone number
+              <input
+                type="tel"
+                placeholder="+353851234567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </label>
+            <button className="btn-primary" type="submit" disabled={sending}>
+              {sending ? 'Sending…' : 'Send code'}
+            </button>
+            <p className="muted">
+              {smsConfigured
+                ? "We'll text a 6-digit code to this number."
+                : "SMS isn't configured in this dev environment — the code is printed to the backend " +
+                  'console log instead of being texted.'}
+            </p>
+            <button className="link-button" type="button" onClick={() => setPhoneStep('closed')}>
+              ← Back
+            </button>
+          </form>
+        )}
 
-      {tab === 'phone' && codeSent && (
-        <form className="auth-form" onSubmit={submitPhoneLogin}>
-          <p className="muted">Code sent to {phone}. Check the backend terminal log for it (dev mode).</p>
-          <label>
-            Verification code
-            <input inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} required />
-          </label>
-          <button className="btn-primary" type="submit">
-            Verify &amp; sign in
-          </button>
-        </form>
-      )}
+        {phoneStep === 'code' && (
+          <form className="auth-form" onSubmit={submitPhoneLogin}>
+            <p className="muted">
+              {smsConfigured
+                ? `Code sent to ${phone}.`
+                : `Code sent to ${phone}. Check the backend terminal log for it (dev mode).`}
+            </p>
+            <label>
+              Verification code
+              <input
+                inputMode="numeric"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+              />
+            </label>
+            <button className="btn-primary" type="submit">
+              Verify &amp; sign in
+            </button>
+            <button className="link-button" type="button" onClick={() => setPhoneStep('phone')}>
+              ← Back
+            </button>
+          </form>
+        )}
+      </div>
+
+      <p className="muted register-footer">
+        Don't have an account? <Link to="/register">Register</Link>
+      </p>
     </section>
   )
 }

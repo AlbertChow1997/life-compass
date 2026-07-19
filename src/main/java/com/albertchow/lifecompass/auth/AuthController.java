@@ -4,6 +4,7 @@ import com.albertchow.lifecompass.auth.dto.AuthConfigResponse;
 import com.albertchow.lifecompass.auth.dto.CredentialLoginRequest;
 import com.albertchow.lifecompass.auth.dto.GoogleLoginRequest;
 import com.albertchow.lifecompass.auth.dto.LoginResponse;
+import com.albertchow.lifecompass.auth.dto.RegisterRequest;
 import com.albertchow.lifecompass.auth.dto.SmsCodeRequest;
 import com.albertchow.lifecompass.auth.dto.SmsLoginRequest;
 import com.albertchow.lifecompass.auth.dto.UserDTO;
@@ -55,10 +56,16 @@ public class AuthController {
         return Result.ok(authService.loginWithSms(request.phone(), request.code()));
     }
 
-    /** Requirement 7: merchant/admin credential login. */
+    /** Email+password login (self-registered users, merchants, and admins). */
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody CredentialLoginRequest request) {
         return Result.ok(authService.loginWithCredentials(request.email(), request.password()));
+    }
+
+    /** Self-registration with email+password. */
+    @PostMapping("/register")
+    public Result<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return Result.ok(authService.register(request));
     }
 
     /** The currently authenticated account, resolved from the JWT. */

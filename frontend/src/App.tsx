@@ -6,6 +6,7 @@ import ShopListPage from './pages/ShopListPage'
 import ShopDetailPage from './pages/ShopDetailPage'
 import PostsPage from './pages/PostsPage'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import MerchantVouchersPage from './pages/MerchantVouchersPage'
 import AdminPostsPage from './pages/AdminPostsPage'
 import './App.css'
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="/shop/:id" element={<ShopDetailPage />} />
             <Route path="/posts" element={<PostsPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route
               path="/merchant/vouchers"
               element={
