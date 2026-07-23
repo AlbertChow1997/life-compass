@@ -73,6 +73,6 @@ public class AuthController {
     public Result<UserDTO> me() {
         LoginUser loginUser = UserContext.require();
         User user = userMapper.selectById(loginUser.id());
-        return Result.ok(new UserDTO(user.getId(), user.getNickName(), user.getIcon(), user.getRole()));
+        return Result.ok(new UserDTO(user.getId(), user.getNickName(), user.getIcon(), user.getCity(), user.getRole()));
     }
 }

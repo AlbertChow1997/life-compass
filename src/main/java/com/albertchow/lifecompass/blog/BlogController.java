@@ -1,6 +1,7 @@
 package com.albertchow.lifecompass.blog;
 
 import com.albertchow.lifecompass.blog.dto.CreatePostRequest;
+import com.albertchow.lifecompass.blog.dto.LikeResponse;
 import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.Blog;
 import com.albertchow.lifecompass.security.UserContext;
@@ -37,5 +38,11 @@ public class BlogController {
     public Result<Blog> create(@Valid @RequestBody CreatePostRequest request) {
         Long userId = UserContext.require().id();
         return Result.ok(blogService.create(userId, request));
+    }
+
+    @PostMapping("/{id}/like")
+    public Result<LikeResponse> toggleLike(@PathVariable Long id) {
+        Long userId = UserContext.require().id();
+        return Result.ok(blogService.toggleLike(id, userId));
     }
 }

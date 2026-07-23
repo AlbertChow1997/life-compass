@@ -40,4 +40,14 @@ public class VoucherOrder {
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    // ---- transient fields populated at query time (not persisted) ----
+
+    /** Voucher title, joined for "my orders" responses. */
+    @TableField(exist = false)
+    private String voucherTitle;
+
+    /** Owning shop's name, joined for "my orders" responses. */
+    @TableField(exist = false)
+    private String shopName;
 }

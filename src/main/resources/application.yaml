@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: lifecompass-backend
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/lifecompass?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 886152
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  docker:
+    compose:
+      enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+lifecompass:
+  jwt:
+    # Dev-only default. Override with the LIFECOMPASS_JWT_SECRET env var in any
+    # shared/production environment — do not commit a real secret here.
+    secret: ${LIFECOMPASS_JWT_SECRET:im85vV51ubBLTNdK7/naocWDnL+zlzMKNv13uHnzC3/9IWD7dT61fEZ/HjeVdcvQ}
+    expiration-seconds: 604800 # 7 days
+  google:
+    # OAuth client ID from Google Cloud Console — required for Google login to work.
+    client-id: ${GOOGLE_CLIENT_ID:}
+  twilio:
+    # Leave blank in local dev: verification codes are logged instead of sent.
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-number: ${TWILIO_FROM_NUMBER:}

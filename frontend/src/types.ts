@@ -57,6 +57,7 @@ export interface Blog {
   status: number
   authorName?: string
   authorIcon?: string
+  likedByCurrentUser?: boolean
   createTime?: string
 }
 
@@ -87,4 +88,24 @@ export interface LoginResponse {
   userId: number
   nickName: string
   role: Role
+}
+
+export interface UserStats {
+  following: number
+  followers: number
+  experience: number
+  proThreshold: number
+}
+
+export interface VoucherOrder {
+  id: number
+  userId: number
+  voucherId: number
+  payType: number
+  /** 1 unpaid, 2 paid, 3 used, 4 cancelled, 5 refunded. */
+  status: number
+  createTime?: string
+  payTime?: string
+  voucherTitle?: string
+  shopName?: string
 }
