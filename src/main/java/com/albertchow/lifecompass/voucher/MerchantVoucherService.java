@@ -14,7 +14,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/** Requirement 7: merchants create vouchers for their own shop and toggle them on/off shelf. */
+/**
+ * Implements merchant-side voucher management: creating vouchers and toggling
+ * them on/off shelf. Every action first checks that the merchant actually
+ * owns the shop the voucher belongs to, to stop merchants touching each
+ * other's listings.
+ */
 @Service
 @RequiredArgsConstructor
 public class MerchantVoucherService {
@@ -22,6 +27,7 @@ public class MerchantVoucherService {
     private final VoucherMapper voucherMapper;
     private final ShopMapper shopMapper;
 
+    /** Creates a new voucher on-shelf for a shop, after confirming the merchant owns that shop. */
     public Voucher create(Long merchantId, CreateVoucherRequest request) {
         Shop shop = requireOwnedShop(merchantId, request.shopId());
 
@@ -41,6 +47,7 @@ public class MerchantVoucherService {
         return voucher;
     }
 
+    /** Flips a voucher on/off shelf, after confirming the merchant owns the shop it belongs to. */
     public Voucher setShelf(Long merchantId, Long voucherId, boolean onShelf) {
         Voucher voucher = voucherMapper.selectById(voucherId);
         if (voucher == null) {
@@ -58,6 +65,7 @@ public class MerchantVoucherService {
         return voucher;
     }
 
+    /** Lists vouchers across every shop the merchant owns, or just one owned shop if shopId is given (rejecting shops they don't own). */
     public List<Voucher> listMine(Long merchantId, Long shopId) {
         List<Long> ownedShopIds = shopMapper.selectList(
                         new LambdaQueryWrapper<Shop>().eq(Shop::getOwnerId, merchantId))
@@ -76,6 +84,7 @@ public class MerchantVoucherService {
         return voucherMapper.selectList(query.orderByDesc(Voucher::getCreateTime));
     }
 
+    /** Fetches a shop and verifies the given merchant is its owner, throwing if the shop is missing or owned by someone else. */
     private Shop requireOwnedShop(Long merchantId, Long shopId) {
         Shop shop = shopMapper.selectById(shopId);
         if (shop == null) {

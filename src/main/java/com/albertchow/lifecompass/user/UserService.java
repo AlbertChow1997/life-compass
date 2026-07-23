@@ -32,7 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** The "personal center": stats, profile editing, and every "my X" list. */
+/**
+ * Backs the "personal center" screens: user stats, profile editing, every
+ * "my X" activity list (shops, posts, comments, likes, orders, ratings),
+ * and user-to-user follow relationships.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -49,6 +53,7 @@ public class UserService {
     private final ExperienceService experienceService;
     private final ShopRatingService shopRatingService;
 
+    /** Assembles a user's follower/following counts plus their live-computed XP and the XP threshold for the "PRO" badge. */
     public UserStatsResponse getStats(Long userId) {
         long following = followMapper.selectCount(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId));
         long followers = followMapper.selectCount(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowUserId, userId));
@@ -56,6 +61,7 @@ public class UserService {
         return new UserStatsResponse(following, followers, experience, ExperienceService.PRO_THRESHOLD);
     }
 
+    /** Updates nickname and city (always) and avatar icon (only if a new one was provided). */
     public User updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userMapper.selectById(userId);
         user.setNickName(request.nickName());
@@ -67,6 +73,7 @@ public class UserService {
         return user;
     }
 
+    /** Fetches the shops the user follows/has saved. */
     public List<Shop> listFollowedShops(Long userId) {
         List<Long> shopIds = shopFollowMapper.selectList(new LambdaQueryWrapper<ShopFollow>().eq(ShopFollow::getUserId, userId))
                 .stream().map(ShopFollow::getShopId).toList();
@@ -76,6 +83,7 @@ public class UserService {
         return shopMapper.selectByIds(shopIds);
     }
 
+    /** Lists the user's own visible (non-deleted) posts, newest first. */
     public List<Blog> listMyPosts(Long userId) {
         var query = new LambdaQueryWrapper<Blog>()
                 .eq(Blog::getUserId, userId)
@@ -84,6 +92,7 @@ public class UserService {
         return blogMapper.selectList(query);
     }
 
+    /** Lists the user's own visible (non-deleted) comments, newest first. */
     public List<BlogComment> listMyComments(Long userId) {
         var query = new LambdaQueryWrapper<BlogComment>()
                 .eq(BlogComment::getUserId, userId)
@@ -92,6 +101,7 @@ public class UserService {
         return commentMapper.selectList(query);
     }
 
+    /** Fetches the posts the user has liked. */
     public List<Blog> listMyLikes(Long userId) {
         List<Long> blogIds = likeMapper.selectList(new LambdaQueryWrapper<BlogLike>().eq(BlogLike::getUserId, userId))
                 .stream().map(BlogLike::getBlogId).toList();
@@ -101,6 +111,7 @@ public class UserService {
         return blogMapper.selectByIds(blogIds);
     }
 
+    /** Lists the user's voucher orders, newest first, with each order's voucher title and shop name filled in. */
     public List<VoucherOrder> listMyOrders(Long userId) {
         var query = new LambdaQueryWrapper<VoucherOrder>()
                 .eq(VoucherOrder::getUserId, userId)
@@ -131,14 +142,17 @@ public class UserService {
         return orders;
     }
 
+    /** Delegates to {@link ShopRatingService} to fetch the user's own shop ratings. */
     public List<ShopRating> listMyRatings(Long userId) {
         return shopRatingService.listMine(userId);
     }
 
+    /** Delegates to {@link ShopRatingService} to delete one of the user's own ratings. */
     public void deleteRating(Long ratingId, Long userId) {
         shopRatingService.deleteMine(ratingId, userId);
     }
 
+    /** Makes one user follow another, after rejecting self-follows and confirming the target account exists. */
     public void followUser(Long userId, Long targetUserId) {
         if (userId.equals(targetUserId)) {
             throw new BusinessException("You can't follow yourself");
@@ -158,12 +172,14 @@ public class UserService {
         followMapper.insert(follow);
     }
 
+    /** Removes the follow relationship between two users, if it exists. */
     public void unfollowUser(Long userId, Long targetUserId) {
         followMapper.delete(new LambdaQueryWrapper<Follow>()
                 .eq(Follow::getUserId, userId)
                 .eq(Follow::getFollowUserId, targetUserId));
     }
 
+    /** Checks whether one user follows another. */
     public boolean isFollowingUser(Long userId, Long targetUserId) {
         return followMapper.exists(new LambdaQueryWrapper<Follow>()
                 .eq(Follow::getUserId, userId)

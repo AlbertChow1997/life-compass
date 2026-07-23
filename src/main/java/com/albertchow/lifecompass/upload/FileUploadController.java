@@ -40,6 +40,7 @@ public class FileUploadController {
      */
     static final Path UPLOAD_DIR = Paths.get("uploads");
 
+    /** Validates the file is a non-empty, allowed image type, saves it under a random name, and returns its public URL path. */
     @PostMapping
     public Result<String> upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {

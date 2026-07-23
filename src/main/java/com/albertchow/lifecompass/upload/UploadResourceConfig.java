@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class UploadResourceConfig implements WebMvcConfigurer {
 
+    /** Maps requests to /uploads/** onto files in the uploads directory on disk. */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")

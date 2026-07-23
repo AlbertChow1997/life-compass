@@ -19,7 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** Requirement 6: browse and purchase shop vouchers. */
+/**
+ * Handles browsing and purchasing shop vouchers: validity checks (on-shelf,
+ * within its active date range, in stock) and keeping the shop's "sold"
+ * counter in sync with completed purchases.
+ */
 @Service
 @RequiredArgsConstructor
 public class VoucherService {
@@ -28,6 +32,7 @@ public class VoucherService {
     private final VoucherOrderMapper voucherOrderMapper;
     private final ShopMapper shopMapper;
 
+    /** Lists vouchers currently on shelf, optionally filtered to one shop, newest first. */
     public List<Voucher> listOnShelf(Long shopId) {
         var query = new LambdaQueryWrapper<Voucher>()
                 .eq(Voucher::getStatus, VoucherStatus.ON_SHELF.code());
@@ -38,6 +43,7 @@ public class VoucherService {
         return voucherMapper.selectList(query);
     }
 
+    /** Fetches a voucher by ID, or throws NotFoundException if it doesn't exist. */
     public Voucher getById(Long id) {
         Voucher voucher = voucherMapper.selectById(id);
         if (voucher == null) {
@@ -46,6 +52,11 @@ public class VoucherService {
         return voucher;
     }
 
+    /**
+     * Buys one unit of a voucher for a user: rejects it if it's off shelf,
+     * not yet started, expired, or (for limited-stock vouchers) sold out,
+     * then records the order and bumps the shop's total sold count.
+     */
     @Transactional
     public VoucherOrder purchase(Long voucherId, Long userId) {
         Voucher voucher = getById(voucherId);

@@ -43,6 +43,7 @@ public class SupportService {
         return new SupportAnswerResponse(matched != null ? matched.getAnswer() : FALLBACK_ANSWER, matched != null);
     }
 
+    /** Finds the first active FAQ entry whose comma-separated keyword list contains a case-insensitive substring of the question. */
     private SupportFaq findMatch(String question) {
         String normalized = question.toLowerCase();
         List<SupportFaq> activeFaqs = faqMapper.selectList(new LambdaQueryWrapper<SupportFaq>().eq(SupportFaq::getStatus, 1));
@@ -57,10 +58,12 @@ public class SupportService {
         return null;
     }
 
+    /** Lists every FAQ entry (including inactive ones), newest first. */
     public List<SupportFaq> listFaq() {
         return faqMapper.selectList(new LambdaQueryWrapper<SupportFaq>().orderByDesc(SupportFaq::getCreateTime));
     }
 
+    /** Creates a new active FAQ entry. */
     public SupportFaq createFaq(SupportFaqRequest request) {
         SupportFaq faq = new SupportFaq();
         faq.setKeywords(request.keywords());
@@ -70,6 +73,7 @@ public class SupportService {
         return faq;
     }
 
+    /** Updates an existing FAQ entry's keywords and answer. */
     public SupportFaq updateFaq(Long id, SupportFaqRequest request) {
         SupportFaq faq = faqMapper.selectById(id);
         if (faq == null) {
@@ -81,6 +85,7 @@ public class SupportService {
         return faq;
     }
 
+    /** Permanently removes an FAQ entry. */
     public void deleteFaq(Long id) {
         if (faqMapper.selectById(id) == null) {
             throw new NotFoundException("FAQ entry not found");
@@ -88,6 +93,7 @@ public class SupportService {
         faqMapper.deleteById(id);
     }
 
+    /** Lists every question ever submitted to the support widget, newest first, for admin review. */
     public List<SupportMessage> listMessages() {
         return messageMapper.selectList(new LambdaQueryWrapper<SupportMessage>().orderByDesc(SupportMessage::getCreateTime));
     }

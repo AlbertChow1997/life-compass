@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @MapperScan("com.albertchow.lifecompass.mapper")
 public class MybatisPlusConfig {
 
+    /** Registers the MySQL pagination interceptor used by any mapper method that accepts a Page parameter. */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();

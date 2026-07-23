@@ -31,6 +31,7 @@ public class ExperienceService {
     private final BlogCommentMapper commentMapper;
     private final BlogLikeMapper likeMapper;
 
+    /** Recomputes a user's total XP by summing daily-capped points from posts, comments, and likes received. */
     public long compute(Long userId) {
         long fromPosts = blogMapper.sumCappedDailyCount(userId, POST_DAILY_CAP) * XP_PER_POST;
         long fromComments = commentMapper.sumCappedDailyCount(userId, COMMENT_DAILY_CAP) * XP_PER_COMMENT;
