@@ -20,6 +20,7 @@ public class SupportController {
 
     private final SupportService supportService;
 
+    /** Answers a visitor's question by matching it against the FAQ keyword list, falling back to a generic reply if nothing matches. */
     @PostMapping("/ask")
     public Result<SupportAnswerResponse> ask(@Valid @RequestBody AskSupportRequest request) {
         LoginUser loginUser = UserContext.get();

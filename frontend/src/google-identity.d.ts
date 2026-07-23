@@ -1,6 +1,10 @@
 export {}
 
-/** Minimal ambient types for the subset of Google Identity Services (GIS) we use. */
+/**
+ * Minimal ambient type declarations for the subset of Google Identity Services (GIS) we use.
+ * The actual `google` object is attached to `window` at runtime by the GIS script loaded
+ * in useGoogleIdentityScript; this file just tells TypeScript that shape exists.
+ */
 declare global {
   interface Window {
     google?: {

@@ -18,6 +18,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Handles fetching and creating comments on blog posts, including replies
+ * (comments that reference a parent comment). Also keeps each post's stored
+ * comment count in sync and attaches author name/avatar to every comment.
+ */
 @Service
 @RequiredArgsConstructor
 public class BlogCommentService {
@@ -26,6 +31,7 @@ public class BlogCommentService {
     private final BlogMapper blogMapper;
     private final UserMapper userMapper;
 
+    /** Returns all visible comments (and replies) for a post, oldest first, with author details filled in. */
     public List<BlogComment> list(Long blogId) {
         var query = new LambdaQueryWrapper<BlogComment>()
                 .eq(BlogComment::getBlogId, blogId)
@@ -34,6 +40,7 @@ public class BlogCommentService {
         return enrich(commentMapper.selectList(query));
     }
 
+    /** Adds a comment (or reply, via parentId/answerId) to a post and bumps the post's comment count by one. */
     @Transactional
     public BlogComment add(Long blogId, Long userId, CreateCommentRequest request) {
         Blog blog = blogMapper.selectById(blogId);
@@ -59,6 +66,7 @@ public class BlogCommentService {
         return enrich(List.of(comment)).get(0);
     }
 
+    /** Looks up each comment's author in bulk and copies their nickname/avatar onto the comment for display. */
     private List<BlogComment> enrich(List<BlogComment> comments) {
         if (comments.isEmpty()) {
             return comments;

@@ -3,6 +3,7 @@ import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Blog } from '../types'
 import { firstImage } from '../format'
 
+/** Read-only list of every post the signed-in user has authored. */
 export default function MyPostsPage() {
   const [posts, setPosts] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)

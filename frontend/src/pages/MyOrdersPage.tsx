@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { VoucherOrder } from '../types'
 
+// Maps the backend's numeric order status codes to human-readable labels for display.
 const STATUS_LABEL: Record<number, string> = {
   1: 'Unpaid',
   2: 'Paid',
@@ -10,6 +11,7 @@ const STATUS_LABEL: Record<number, string> = {
   5: 'Refunded',
 }
 
+/** Read-only history of the signed-in user's voucher purchases, with their current status. */
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<VoucherOrder[]>([])
   const [loading, setLoading] = useState(true)

@@ -5,7 +5,11 @@ import type { Shop, ShopRating, Voucher } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { euro, firstImage, stars } from '../format'
 
-/** Shop detail: view info, buy vouchers (req 6), rate the shop (req 3). */
+/**
+ * Shop detail page: shows the shop's info, its available vouchers (purchasable
+ * when signed in), and its reviews. Signed-in users can also follow the shop
+ * and submit their own star rating with an optional comment.
+ */
 export default function ShopDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
@@ -22,6 +26,8 @@ export default function ShopDetailPage() {
   const [followed, setFollowed] = useState(false)
   const [followBusy, setFollowBusy] = useState(false)
 
+  // Loads everything the page needs at once: shop details, its ratings, its
+  // vouchers, and whether the current user already follows it.
   async function load() {
     setLoading(true)
     setLoadError(null)
@@ -43,6 +49,8 @@ export default function ShopDetailPage() {
     }
   }
 
+  // Follows or unfollows this shop; `followBusy` disables the button mid-request
+  // to avoid double-submitting a follow/unfollow before the previous one resolves.
   async function toggleFollow() {
     if (!user) return
     setFollowBusy(true)
@@ -66,6 +74,8 @@ export default function ShopDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
+  // Submits the star rating + optional comment, then reloads so the new review
+  // (and the shop's updated average score) show up right away.
   async function submitRating(e: FormEvent) {
     e.preventDefault()
     setMessage(null)
@@ -79,6 +89,7 @@ export default function ShopDetailPage() {
     }
   }
 
+  // Purchases a voucher for the signed-in user and reloads to reflect updated stock/state.
   async function buyVoucher(voucherId: number) {
     setMessage(null)
     try {

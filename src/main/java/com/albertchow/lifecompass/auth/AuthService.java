@@ -20,11 +20,18 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Handles the actual work behind every login/registration method: verifying
+ * Google tokens, checking SMS codes against Redis, hashing/checking
+ * passwords, and issuing JWTs once a user is authenticated.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    // Redis key prefix used to store a phone number's pending SMS code, e.g. "login:code:+353...".
     private static final String SMS_CODE_KEY_PREFIX = "login:code:";
+    // How long a sent SMS code stays valid before it expires from Redis.
     private static final Duration SMS_CODE_TTL = Duration.ofMinutes(5);
 
     private final UserMapper userMapper;
@@ -34,7 +41,7 @@ public class AuthService {
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final TwilioSmsSender smsSender;
 
-    /** Requirement 1: Google login. Finds or creates a USER account. */
+    /** Verifies the Google ID token, then signs in the matching user — creating a new USER account on first login. */
     public LoginResponse loginWithGoogle(String idTokenString) {
         GoogleIdToken idToken;
         try {
@@ -73,14 +80,14 @@ public class AuthService {
         return issueToken(user);
     }
 
-    /** Requirement 1: step one of SMS login — send a 6-digit code via Twilio. */
+    /** Generates a random 6-digit code, saves it to Redis with a 5-minute expiry, and texts it to the phone via Twilio. */
     public void sendSmsCode(String phone) {
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(100_000, 1_000_000));
         redisTemplate.opsForValue().set(SMS_CODE_KEY_PREFIX + phone, code, SMS_CODE_TTL);
         smsSender.send(phone, code);
     }
 
-    /** Requirement 1: step two of SMS login — verify the code, find or create a USER account. */
+    /** Checks the submitted code against the one stored in Redis, then signs in the matching user — creating a new USER account on first login. */
     public LoginResponse loginWithSms(String phone, String code) {
         String key = SMS_CODE_KEY_PREFIX + phone;
         String cached = redisTemplate.opsForValue().get(key);
@@ -130,6 +137,7 @@ public class AuthService {
         return issueToken(user);
     }
 
+    /** Blocks suspended accounts, then builds a JWT and wraps it in the response the frontend expects. */
     private LoginResponse issueToken(User user) {
         if (user.getStatus() != null && user.getStatus() == 0) {
             throw new BusinessException("This account has been suspended");

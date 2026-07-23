@@ -29,6 +29,7 @@ public class SupportService {
     private final SupportFaqMapper faqMapper;
     private final SupportMessageMapper messageMapper;
 
+    /** Tries to match the question to an FAQ entry, logs the question either way, and returns the matched answer or a fallback message. */
     public SupportAnswerResponse ask(String question, Long userId) {
         SupportFaq matched = findMatch(question);
 

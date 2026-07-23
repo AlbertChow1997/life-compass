@@ -35,6 +35,7 @@ public class ShopRatingService {
     private final ShopRatingMapper shopRatingMapper;
     private final ShopMapper shopMapper;
 
+    /** Lists all ratings for a shop, newest first. */
     public List<ShopRating> list(Long shopId) {
         var query = new LambdaQueryWrapper<ShopRating>()
                 .eq(ShopRating::getShopId, shopId)
@@ -42,6 +43,13 @@ public class ShopRatingService {
         return shopRatingMapper.selectList(query);
     }
 
+    /**
+     * Records a new rating for a shop after enforcing the two anti-spam
+     * rules: rejects the request if the user has already left {@link #MONTHLY_CAP}
+     * ratings this calendar month, or if they rated this same shop within
+     * the last {@link #SAME_SHOP_COOLDOWN_DAYS} days. On success, recalculates
+     * the shop's average score and comment count.
+     */
     @Transactional
     public ShopRating rate(Long shopId, Long userId, RateShopRequest request) {
         if (shopMapper.selectById(shopId) == null) {
@@ -77,6 +85,7 @@ public class ShopRatingService {
         return rating;
     }
 
+    /** Lists every rating the given user has ever left, newest first, with each shop's name attached. */
     public List<ShopRating> listMine(Long userId) {
         var query = new LambdaQueryWrapper<ShopRating>()
                 .eq(ShopRating::getUserId, userId)
@@ -97,6 +106,7 @@ public class ShopRatingService {
         return ratings;
     }
 
+    /** Deletes a rating, but only if it belongs to the requesting user, then refreshes the shop's average score. */
     @Transactional
     public void deleteMine(Long ratingId, Long userId) {
         ShopRating rating = shopRatingMapper.selectById(ratingId);
@@ -107,6 +117,7 @@ public class ShopRatingService {
         recomputeShopScore(rating.getShopId());
     }
 
+    /** Recalculates a shop's rating count and average score (stored x10 so it can be an int) from scratch. */
     private void recomputeShopScore(Long shopId) {
         List<ShopRating> ratings = shopRatingMapper.selectList(
                 new LambdaQueryWrapper<ShopRating>().eq(ShopRating::getShopId, shopId));

@@ -4,6 +4,7 @@ import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Shop } from '../types'
 import { euro, firstImage, stars } from '../format'
 
+/** Lists every shop the signed-in user currently follows, as clickable cards linking to the shop's detail page. */
 export default function FollowedShopsPage() {
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)

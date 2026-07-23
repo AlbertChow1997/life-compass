@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** Endpoints for viewing and submitting star ratings/reviews on a single shop. */
 @RestController
 @RequestMapping("/api/shop/{shopId}/ratings")
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class ShopRatingController {
 
     private final ShopRatingService ratingService;
 
+    /** Lists all ratings left on this shop. */
     @GetMapping
     public Result<List<ShopRating>> list(@PathVariable Long shopId) {
         return Result.ok(ratingService.list(shopId));

@@ -10,7 +10,11 @@ interface MeResponse {
   role: string
 }
 
-/** Edit basic profile info and avatar. */
+/**
+ * Lets the signed-in user edit their basic profile: nickname, city, and avatar
+ * photo. Saving refreshes the shared AuthContext so the new nickname/avatar
+ * show up immediately in the navbar.
+ */
 export default function ProfilePage() {
   const { refresh } = useAuth()
   const [nickName, setNickName] = useState('')
@@ -55,6 +59,8 @@ export default function ProfilePage() {
     }
   }
 
+  // Saves the edited fields, then calls AuthContext's refresh() so the rest of
+  // the app (e.g. the navbar avatar) picks up the change without a full reload.
   async function submit(e: FormEvent) {
     e.preventDefault()
     setError(null)

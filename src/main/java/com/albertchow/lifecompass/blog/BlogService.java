@@ -24,7 +24,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Requirement 4: user posts, optionally linking a shop. */
+/**
+ * Implements blog post browsing, creation, and liking. A post can optionally
+ * be linked to a shop. Also enriches posts with author details and
+ * current-user-specific flags (liked / following author) before returning them.
+ */
 @Service
 @RequiredArgsConstructor
 public class BlogService {
@@ -35,6 +39,7 @@ public class BlogService {
     private final BlogLikeMapper likeMapper;
     private final FollowMapper followMapper;
 
+    /** Creates a new post for the given user, validating the linked shop (if any) exists. */
     public Blog create(Long userId, CreatePostRequest request) {
         if (request.shopId() != null && shopMapper.selectById(request.shopId()) == null) {
             throw new NotFoundException("Linked shop not found");
@@ -53,6 +58,7 @@ public class BlogService {
         return enrich(List.of(blog)).get(0);
     }
 
+    /** Lists visible posts (featured ones first), optionally narrowed to featured-only or to authors the current user follows. */
     public List<Blog> list(Boolean featuredOnly, Boolean followedOnly) {
         var query = new LambdaQueryWrapper<Blog>()
                 .eq(Blog::getStatus, 1)
@@ -77,6 +83,7 @@ public class BlogService {
         return enrich(blogMapper.selectList(query));
     }
 
+    /** Fetches one post by ID, treating soft-deleted or missing posts as not found. */
     public Blog getById(Long id) {
         Blog blog = blogMapper.selectById(id);
         if (!isVisible(blog)) {
@@ -113,10 +120,12 @@ public class BlogService {
         return new LikeResponse((int) count, nowLiked);
     }
 
+    /** A post counts as visible only if it exists and hasn't been soft-deleted (status == 1). */
     private boolean isVisible(Blog blog) {
         return blog != null && blog.getStatus() != null && blog.getStatus() == 1;
     }
 
+    /** Fills in each post's author name/avatar, and — if someone is logged in — whether they liked the post or follow its author. */
     private List<Blog> enrich(List<Blog> blogs) {
         if (blogs.isEmpty()) {
             return blogs;

@@ -9,7 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Requirement 8: admin moderation of posts and comments. */
+/**
+ * Implements the admin moderation actions for the blog: featuring posts,
+ * taking down posts, and deleting comments. Deletions here are soft deletes
+ * (status flipped to 0) rather than removing rows from the database.
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminBlogService {
@@ -17,6 +21,7 @@ public class AdminBlogService {
     private final BlogMapper blogMapper;
     private final BlogCommentMapper commentMapper;
 
+    /** Toggles whether a post is featured; throws if the post doesn't exist. */
     public void setFeatured(Long blogId, boolean featured) {
         requireBlog(blogId);
         Blog patch = new Blog();
@@ -25,6 +30,7 @@ public class AdminBlogService {
         blogMapper.updateById(patch);
     }
 
+    /** Soft-deletes a post by flipping its status to 0 instead of removing the row. */
     public void deletePost(Long blogId) {
         requireBlog(blogId);
         Blog patch = new Blog();
@@ -33,6 +39,7 @@ public class AdminBlogService {
         blogMapper.updateById(patch);
     }
 
+    /** Soft-deletes a comment and decrements the parent post's comment counter (never below zero). */
     @Transactional
     public void deleteComment(Long commentId) {
         BlogComment comment = commentMapper.selectById(commentId);
@@ -53,6 +60,7 @@ public class AdminBlogService {
         }
     }
 
+    /** Fetches a post by ID or throws NotFoundException if it doesn't exist. */
     private Blog requireBlog(Long blogId) {
         Blog blog = blogMapper.selectById(blogId);
         if (blog == null) {

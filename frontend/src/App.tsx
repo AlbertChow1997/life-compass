@@ -21,6 +21,12 @@ import MyOrdersPage from './pages/MyOrdersPage'
 import MyRatingsPage from './pages/MyRatingsPage'
 import './App.css'
 
+/**
+ * Root component of the app: sets up global auth state, the client-side router,
+ * and the page shell (navbar, main content area, floating support widget).
+ * Routes under /merchant and /admin are gated by role via RequireRole, and
+ * routes under /profile are gated to any logged-in user via RequireAuth.
+ */
 export default function App() {
   return (
     <AuthProvider>

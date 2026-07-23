@@ -10,6 +10,12 @@ type PhoneStep = 'closed' | 'phone' | 'code'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
+/**
+ * Sign-in page offering three independent auth methods: email/password (for
+ * both regular users and merchant/admin accounts), Google OAuth, and phone/SMS
+ * one-time-code. Whichever method succeeds calls `login()` from AuthContext
+ * and redirects home.
+ */
 export default function LoginPage() {
   const [accountType, setAccountType] = useState<AccountType>('user')
   const { login } = useAuth()
@@ -35,11 +41,13 @@ export default function LoginPage() {
       .catch(() => setSmsConfigured(false))
   }, [])
 
+  // Common finish for every login method: store the token, load the profile, go home.
   async function handleSuccess(res: LoginResponse) {
     await login(res.token)
     navigate('/')
   }
 
+  // Called by Google's script with the ID token once the user approves the Google sign-in prompt.
   async function handleGoogleCredential(response: { credential: string }) {
     setError(null)
     try {
@@ -80,6 +88,7 @@ export default function LoginPage() {
     }
   }
 
+  // Requests an SMS one-time code for the entered phone number, then advances to the code-entry step.
   async function sendCode(e: FormEvent) {
     e.preventDefault()
     setError(null)

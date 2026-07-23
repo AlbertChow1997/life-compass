@@ -12,7 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Admin management of shop listings (secured by /api/admin/** -> ROLE_ADMIN). */
+/**
+ * Admin-only endpoints for creating and editing shop listings. All paths are
+ * under /api/admin/**, which Spring Security restricts to ROLE_ADMIN
+ * (see SecurityConfig).
+ */
 @RestController
 @RequestMapping("/api/admin/shop")
 @RequiredArgsConstructor
@@ -20,11 +24,13 @@ public class AdminShopController {
 
     private final ShopService shopService;
 
+    /** Creates a new shop listing. */
     @PostMapping
     public Result<Shop> create(@Valid @RequestBody ShopUpsertRequest request) {
         return Result.ok(shopService.create(request));
     }
 
+    /** Updates an existing shop listing's details. */
     @PutMapping("/{id}")
     public Result<Shop> update(@PathVariable Long id, @Valid @RequestBody ShopUpsertRequest request) {
         return Result.ok(shopService.update(id, request));

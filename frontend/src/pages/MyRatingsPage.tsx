@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { ShopRating } from '../types'
 
+/** Lists every shop review the signed-in user has written, and lets them delete their own reviews. */
 export default function MyRatingsPage() {
   const [ratings, setRatings] = useState<ShopRating[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,6 +24,8 @@ export default function MyRatingsPage() {
     load()
   }, [])
 
+  // Deletes a review after confirmation, then removes it from local state directly
+  // (rather than re-fetching the whole list) so the UI updates instantly.
   async function deleteRating(id: number) {
     if (!window.confirm('Delete this review?')) return
     setError(null)

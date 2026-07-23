@@ -17,7 +17,11 @@ interface SupportMessage {
   createTime?: string
 }
 
-/** Requirement (support): admins manage auto-reply FAQ entries and review customer questions. */
+/**
+ * Admin dashboard for the support system: manage the keyword-matched FAQ
+ * entries that power SupportWidget's auto-replies, and review the questions
+ * customers have actually asked (including ones that didn't match any FAQ).
+ */
 export default function AdminSupportPage() {
   const [faqs, setFaqs] = useState<SupportFaq[]>([])
   const [messages, setMessages] = useState<SupportMessage[]>([])
@@ -28,6 +32,7 @@ export default function AdminSupportPage() {
   const [answer, setAnswer] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
 
+  // Loads FAQ entries and the customer question log together, in parallel.
   async function load() {
     setLoading(true)
     try {
@@ -60,6 +65,7 @@ export default function AdminSupportPage() {
     setAnswer('')
   }
 
+  // Creates a new FAQ entry, or updates the one being edited (editingId set by startEdit).
   async function submitFaq(e: FormEvent) {
     e.preventDefault()
     setError(null)

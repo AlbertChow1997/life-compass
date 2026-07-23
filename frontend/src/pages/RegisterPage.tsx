@@ -6,6 +6,11 @@ import type { LoginResponse } from '../types'
 
 type RoleChoice = 'USER' | 'MERCHANT'
 
+/**
+ * Sign-up page for creating a new account with email/password. Lets the
+ * visitor pick whether they're registering as a regular user or a merchant;
+ * admin accounts can't self-register and are provisioned separately.
+ */
 export default function RegisterPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -19,6 +24,8 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Validates the password confirmation locally before hitting the backend,
+  // then registers and immediately signs the new account in.
   async function submit(e: FormEvent) {
     e.preventDefault()
     setError(null)

@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Blog } from '../types'
 
-/** Requirement 8: admin moderation — feature or remove posts. */
+/**
+ * Admin moderation dashboard for community posts: lets an admin pin a post as
+ * "Featured" (to promote it) or delete it outright. Restricted to the ADMIN
+ * role via RequireRole in the router.
+ */
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<string | null>(null)
 
+  // Loads every post (not just the current admin's) so all community content can be moderated.
   async function load() {
     setLoading(true)
     try {
@@ -24,6 +29,7 @@ export default function AdminPostsPage() {
     load()
   }, [])
 
+  // Flips the post's featured flag on the backend, then reloads to reflect the new state.
   async function toggleFeatured(post: Blog) {
     setMessage(null)
     try {

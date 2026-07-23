@@ -2,7 +2,11 @@ import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
 
-/** Client-side gate: redirects to /login if signed out. Any role is fine — the backend enforces this too. */
+/**
+ * Route guard for pages that just need "some" logged-in user (any role).
+ * Redirects to /login when signed out. This is a UX convenience only —
+ * the backend independently re-checks auth on every request.
+ */
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth()
 

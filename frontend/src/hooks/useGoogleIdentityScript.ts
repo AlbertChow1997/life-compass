@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
+// Module-level cache so the <script> tag is only ever injected once, even if
+// multiple components using this hook mount at the same time.
 let scriptPromise: Promise<void> | null = null
 
 function loadScript(): Promise<void> {

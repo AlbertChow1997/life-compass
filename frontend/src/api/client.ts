@@ -1,15 +1,17 @@
 import axios, { isAxiosError } from 'axios'
 
 /**
- * Shared axios instance. Requests hit `/api/*`, which Vite proxies to the
- * Spring Boot backend in development (see vite.config.ts).
+ * Central place for talking to the backend: a preconfigured axios instance plus
+ * helpers for unwrapping the backend's standard response envelope and error messages.
+ * Requests hit `/api/*`, which Vite proxies to the Spring Boot backend in development
+ * (see vite.config.ts).
  */
 export const api = axios.create({
   baseURL: '/api',
   timeout: 10_000,
 })
 
-// Attach the JWT to every request.
+// Attach the JWT to every outgoing request so protected endpoints authenticate automatically.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {

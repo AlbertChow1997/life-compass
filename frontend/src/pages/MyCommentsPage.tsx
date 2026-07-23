@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { BlogComment } from '../types'
 
+/** Read-only list of every comment the signed-in user has left on posts. */
 export default function MyCommentsPage() {
   const [comments, setComments] = useState<BlogComment[]>([])
   const [loading, setLoading] = useState(true)

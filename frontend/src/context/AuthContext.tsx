@@ -2,6 +2,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { api, type ApiResult } from '../api/client'
 import type { Role } from '../types'
 
+/**
+ * App-wide authentication context: tracks the current logged-in user, exposes
+ * login/logout/refresh actions, and re-validates any stored JWT against the
+ * backend on first load. Wrap the app in `AuthProvider` and read state via `useAuth()`.
+ */
 export interface AuthUser {
   userId: number
   nickName: string
@@ -29,6 +34,8 @@ interface MeResponse {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+// Fetches the current user's profile using the stored JWT; returns null on any
+// failure (expired/invalid token, network error) so callers can treat it as "not logged in".
 async function fetchProfile(): Promise<AuthUser | null> {
   try {
     const res = await api.get<ApiResult<MeResponse>>('/auth/me')
@@ -81,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>{children}</AuthContext.Provider>
 }
 
+// Convenience hook for consuming AuthContext; throws if used outside AuthProvider
+// so misuse fails loudly during development rather than silently returning undefined.
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

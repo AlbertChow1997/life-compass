@@ -6,7 +6,12 @@ interface ChatEntry {
   answer: string
 }
 
-/** Floating support widget (bottom-right): keyword-matched auto-replies, available signed in or out. */
+/**
+ * Floating support widget (bottom-right corner, on every page): a small chat panel
+ * that sends the visitor's question to the backend's keyword-matched auto-reply
+ * endpoint and appends the answer to the on-screen history. Works whether or not
+ * the visitor is signed in.
+ */
 export default function SupportWidget() {
   const [open, setOpen] = useState(false)
   const [question, setQuestion] = useState('')
@@ -14,6 +19,8 @@ export default function SupportWidget() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Sends the typed question to the backend and appends the reply to the chat
+  // history; clears the input immediately so the UI feels responsive while waiting.
   async function submit(e: FormEvent) {
     e.preventDefault()
     const asked = question.trim()

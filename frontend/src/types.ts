@@ -1,6 +1,8 @@
 /**
- * Frontend TypeScript models mirroring the backend entities.
- * Money fields are euro cents; `score` is average rating x10.
+ * Frontend TypeScript models mirroring the backend entities (shops, blogs, vouchers, etc).
+ * Keep these in sync with the Java DTOs they correspond to.
+ * Note: money fields are stored in euro cents (e.g. 1050 = €10.50), and `score` is the
+ * average rating multiplied by 10 (e.g. a score of 46 displays as "4.6" stars).
  */
 
 export type Role = 'USER' | 'MERCHANT' | 'ADMIN'
@@ -104,7 +106,7 @@ export interface VoucherOrder {
   userId: number
   voucherId: number
   payType: number
-  /** 1 unpaid, 2 paid, 3 used, 4 cancelled, 5 refunded. */
+  /** Order lifecycle stage: 1 unpaid, 2 paid, 3 used, 4 cancelled, 5 refunded. */
   status: number
   createTime?: string
   payTime?: string

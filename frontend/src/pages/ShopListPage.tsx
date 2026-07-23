@@ -6,9 +6,10 @@ import { euro, firstImage, stars } from '../format'
 import Banner from '../components/Banner'
 
 /**
- * Browse shops with category filtering and name search (requirements 2 & 5).
- * Talks to GET /api/shop-type and GET /api/shop, and degrades gracefully to a
- * clear "backend not ready" message until those endpoints exist.
+ * Home page: browse all shops, filterable by category chip and free-text name
+ * search. Fetches the category list and shop list from the backend once on
+ * mount; filtering itself happens client-side. Shows a friendly message if the
+ * backend can't be reached instead of a blank/broken page.
  */
 export default function ShopListPage() {
   const [types, setTypes] = useState<ShopType[]>([])
@@ -18,6 +19,9 @@ export default function ShopListPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Fetches categories and shops together on mount. `cancelled` guards against
+  // setting state after the component has unmounted (e.g. user navigates away
+  // before the request finishes).
   useEffect(() => {
     let cancelled = false
     async function load() {
@@ -47,6 +51,8 @@ export default function ShopListPage() {
     }
   }, [])
 
+  // Applies the category filter and search query client-side against the full
+  // shop list already loaded; recomputed only when the inputs actually change.
   const visible = useMemo(() => {
     return shops.filter((s) => {
       const byType = activeType == null || s.typeId === activeType

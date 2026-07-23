@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Public-facing endpoints for browsing and publishing blog posts, and for
+ * liking them. Comment endpoints live separately in {@link BlogCommentController}.
+ */
 @RestController
 @RequestMapping("/api/blog")
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class BlogController {
 
     private final BlogService blogService;
 
+    /** Lists visible posts, optionally filtered to featured-only or to posts by people the current user follows. */
     @GetMapping
     public Result<List<Blog>> list(
             @RequestParam(required = false) Boolean featured,
@@ -31,17 +36,20 @@ public class BlogController {
         return Result.ok(blogService.list(featured, followedOnly));
     }
 
+    /** Fetches a single post by ID. */
     @GetMapping("/{id}")
     public Result<Blog> detail(@PathVariable Long id) {
         return Result.ok(blogService.getById(id));
     }
 
+    /** Publishes a new post on behalf of the logged-in user, optionally linked to a shop. */
     @PostMapping
     public Result<Blog> create(@Valid @RequestBody CreatePostRequest request) {
         Long userId = UserContext.require().id();
         return Result.ok(blogService.create(userId, request));
     }
 
+    /** Likes the post if the current user hasn't liked it yet, otherwise un-likes it. */
     @PostMapping("/{id}/like")
     public Result<LikeResponse> toggleLike(@PathVariable Long id) {
         Long userId = UserContext.require().id();

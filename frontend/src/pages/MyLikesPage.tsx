@@ -3,6 +3,7 @@ import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Blog } from '../types'
 import { firstImage } from '../format'
 
+/** Read-only gallery of every post the signed-in user has liked. */
 export default function MyLikesPage() {
   const [posts, setPosts] = useState<Blog[]>([])
   const [loading, setLoading] = useState(true)

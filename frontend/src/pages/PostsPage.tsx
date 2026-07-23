@@ -9,7 +9,12 @@ import Banner from '../components/Banner'
 
 type FeedFilter = 'all' | 'following'
 
-/** Community posts feed (requirement 4): user recommendations, optionally linking a shop and an image. */
+/**
+ * Community posts feed: browse recommendations shared by other users (optionally
+ * filtered to just people you follow), like/unlike posts, follow/unfollow authors,
+ * expand a post's comment thread inline, and — if signed in — publish a new post
+ * with an optional linked shop and uploaded photo.
+ */
 export default function PostsPage() {
   const { user } = useAuth()
   const [posts, setPosts] = useState<Blog[]>([])
@@ -26,6 +31,8 @@ export default function PostsPage() {
   const [uploading, setUploading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
+  // Loads the post feed (filtered server-side to "following" if that tab is
+  // selected) together with the shop list used to populate the "link a shop" dropdown.
   async function load() {
     setLoading(true)
     setError(null)
@@ -49,6 +56,10 @@ export default function PostsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
+  // Follows or unfollows a post's author. The follow state is read off any post
+  // by that author already in `posts` (they're all in sync), then flipped via
+  // separate POST/DELETE calls, and every post by that author is updated at once
+  // so the "Following" badge stays consistent across the whole feed.
   async function toggleFollowAuthor(authorId: number) {
     if (!user) return
     const currentlyFollowed = posts.find((p) => p.userId === authorId)?.authorFollowedByCurrentUser ?? false
@@ -66,6 +77,9 @@ export default function PostsPage() {
     }
   }
 
+  // Toggles a like on one post. The backend endpoint itself flips the state (like
+  // if not liked, unlike if already liked) and returns the authoritative new count
+  // and liked-by-me flag, which we trust over any local guess.
   async function toggleLike(postId: number) {
     if (!user) return
     try {
@@ -101,6 +115,7 @@ export default function PostsPage() {
     }
   }
 
+  // Publishes the new-post form, then clears it and reloads the feed to show the new post.
   async function submitPost(e: FormEvent) {
     e.preventDefault()
     setFormError(null)

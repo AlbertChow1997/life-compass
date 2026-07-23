@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Public list of business categories (requirement 5's filter facets). */
+/**
+ * Public endpoint for the list of shop/business categories (e.g. "Cafe",
+ * "Restaurant"), used by the frontend to build its filter facets.
+ */
 @RestController
 @RequestMapping("/api/shop-type")
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class ShopTypeController {
 
     private final ShopTypeMapper shopTypeMapper;
 
+    /** Returns all shop types in their configured display order. */
     @GetMapping
     public Result<List<ShopType>> list() {
         var query = new LambdaQueryWrapper<ShopType>().orderByAsc(ShopType::getSort);

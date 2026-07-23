@@ -4,7 +4,11 @@ import type { Shop, Voucher } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { euro } from '../format'
 
-/** Requirement 7: merchants manage vouchers for the shop(s) they own. */
+/**
+ * Merchant dashboard for managing vouchers on the shop(s) the signed-in
+ * merchant owns: create new vouchers and toggle whether existing ones are
+ * "on shelf" (purchasable) or not. Restricted to the MERCHANT role via RequireRole.
+ */
 export default function MerchantVouchersPage() {
   const { user } = useAuth()
   const [vouchers, setVouchers] = useState<Voucher[]>([])
@@ -17,6 +21,8 @@ export default function MerchantVouchersPage() {
   const [payValue, setPayValue] = useState('')
   const [actualValue, setActualValue] = useState('')
 
+  // Loads this merchant's vouchers plus the full shop list (there's no "my shops"
+  // endpoint, so we filter all shops down to the ones this user owns).
   async function load() {
     setLoading(true)
     try {
@@ -27,6 +33,7 @@ export default function MerchantVouchersPage() {
       setVouchers(voucherRes.data.data ?? [])
       const mine = (shopRes.data.data ?? []).filter((s) => s.ownerId === user?.userId)
       setMyShops(mine)
+      // Default the form's shop picker to the first owned shop, without clobbering a selection already made.
       setShopId((current) => (current === '' && mine.length > 0 ? mine[0].id : current))
     } catch (err) {
       setMessage(apiErrorMessage(err, 'Could not load your vouchers.'))
@@ -40,6 +47,7 @@ export default function MerchantVouchersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Flips a voucher between on-shelf (purchasable) and off-shelf.
   async function toggleShelf(v: Voucher) {
     setMessage(null)
     try {
@@ -50,6 +58,8 @@ export default function MerchantVouchersPage() {
     }
   }
 
+  // Submits the new-voucher form; euro amounts entered by the merchant are
+  // converted to integer cents here since that's what the backend stores.
   async function createVoucher(e: FormEvent) {
     e.preventDefault()
     setMessage(null)

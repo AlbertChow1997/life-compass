@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Exposes all the ways a visitor can sign in or register: Google sign-in,
+ * SMS one-time-code login, and classic email+password login/registration.
+ * Delegates the actual business logic to {@link AuthService} and just wires
+ * up the HTTP endpoints.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -31,26 +37,26 @@ public class AuthController {
     private final UserMapper userMapper;
     private final TwilioSmsSender smsSender;
 
-    /** Lets the login page show accurate copy without exposing any Twilio secrets. */
+    /** Tells the frontend whether SMS login is available, so it can hide that option instead of exposing Twilio secrets. */
     @GetMapping("/config")
     public Result<AuthConfigResponse> config() {
         return Result.ok(new AuthConfigResponse(smsSender.isConfigured()));
     }
 
-    /** Requirement 1: Google login. */
+    /** Signs a user in (or registers them) using a Google ID token from the frontend's Google sign-in widget. */
     @PostMapping("/google")
     public Result<LoginResponse> google(@Valid @RequestBody GoogleLoginRequest request) {
         return Result.ok(authService.loginWithGoogle(request.idToken()));
     }
 
-    /** Requirement 1: send a Twilio SMS verification code. */
+    /** Sends a one-time SMS verification code to the given phone number, as the first step of SMS login. */
     @PostMapping("/sms/code")
     public Result<Void> sendSmsCode(@Valid @RequestBody SmsCodeRequest request) {
         authService.sendSmsCode(request.phone());
         return Result.ok();
     }
 
-    /** Requirement 1: complete SMS login with the verification code. */
+    /** Finishes SMS login by checking the code the user typed in against the one that was texted to them. */
     @PostMapping("/sms/login")
     public Result<LoginResponse> smsLogin(@Valid @RequestBody SmsLoginRequest request) {
         return Result.ok(authService.loginWithSms(request.phone(), request.code()));
@@ -68,7 +74,7 @@ public class AuthController {
         return Result.ok(authService.register(request));
     }
 
-    /** The currently authenticated account, resolved from the JWT. */
+    /** Returns basic profile details for whichever account the request's JWT belongs to. */
     @GetMapping("/me")
     public Result<UserDTO> me() {
         LoginUser loginUser = UserContext.require();

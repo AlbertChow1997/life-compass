@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Public shop browsing and search (requirements 2 & 5). */
+/**
+ * Public endpoints for browsing/searching shops and for following/unfollowing
+ * them (saving a shop to your list). Ratings live separately in
+ * {@link ShopRatingController}.
+ */
 @RestController
 @RequestMapping("/api/shop")
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class ShopController {
 
     private final ShopService shopService;
 
+    /** Searches shops, optionally filtered by category (typeId) and/or a name keyword. */
     @GetMapping
     public Result<List<Shop>> list(
             @RequestParam(required = false) Long typeId,
@@ -31,12 +36,13 @@ public class ShopController {
         return Result.ok(shopService.search(typeId, name));
     }
 
+    /** Fetches full details for a single shop. */
     @GetMapping("/{id}")
     public Result<Shop> detail(@PathVariable Long id) {
         return Result.ok(shopService.getById(id));
     }
 
-    /** Public: falls back to followed=false when signed out (no permitAll special-casing needed). */
+    /** Reports whether the current user follows this shop; signed-out visitors simply get followed=false rather than a 401. */
     @GetMapping("/{id}/follow")
     public Result<FollowStatusResponse> followStatus(@PathVariable Long id) {
         LoginUser loginUser = UserContext.get();
@@ -44,6 +50,7 @@ public class ShopController {
         return Result.ok(new FollowStatusResponse(shopService.isFollowedBy(id, userId)));
     }
 
+    /** Adds this shop to the current user's followed/saved list. */
     @PostMapping("/{id}/follow")
     public Result<Void> follow(@PathVariable Long id) {
         Long userId = UserContext.require().id();
@@ -51,6 +58,7 @@ public class ShopController {
         return Result.ok();
     }
 
+    /** Removes this shop from the current user's followed/saved list. */
     @DeleteMapping("/{id}/follow")
     public Result<Void> unfollow(@PathVariable Long id) {
         Long userId = UserContext.require().id();

@@ -17,6 +17,8 @@ export default function UserMenu() {
   const [stats, setStats] = useState<UserStats | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  // Lazily fetch follow/XP stats only when the dropdown is opened by a regular
+  // user — merchants/admins don't have this data and it'd be wasted on every page load.
   useEffect(() => {
     if (!open || user?.role !== 'USER') return
     api
@@ -25,6 +27,7 @@ export default function UserMenu() {
       .catch(() => setStats(null))
   }, [open, user?.role])
 
+  // Closes the dropdown when the user clicks anywhere outside it.
   useEffect(() => {
     if (!open) return
     function handleClick(e: MouseEvent) {
@@ -49,6 +52,8 @@ export default function UserMenu() {
     navigate(path)
   }
 
+  // PRO status is unlocked once experience reaches the threshold; the progress
+  // bar is clamped to 100% so it never overflows once the user has already qualified.
   const isPro = stats != null && stats.experience >= stats.proThreshold
   const progressPct = stats ? Math.min(100, (stats.experience / stats.proThreshold) * 100) : 0
 

@@ -12,6 +12,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Handles shop listings: searching/browsing, admin create/update, and
+ * users following (saving) shops. Ratings are handled separately by
+ * {@link ShopRatingService}.
+ */
 @Service
 @RequiredArgsConstructor
 public class ShopService {
@@ -19,7 +24,7 @@ public class ShopService {
     private final ShopMapper shopMapper;
     private final ShopFollowMapper shopFollowMapper;
 
-    /** Requirements 2 & 5: browse shops, optionally filtered by category and/or name. */
+    /** Searches shops, optionally filtered by category (typeId) and/or a name keyword, ranked by score. */
     public List<Shop> search(Long typeId, String name) {
         LambdaQueryWrapper<Shop> query = new LambdaQueryWrapper<>();
         if (typeId != null) {
@@ -32,6 +37,7 @@ public class ShopService {
         return shopMapper.selectList(query);
     }
 
+    /** Fetches a shop by ID, or throws NotFoundException if it doesn't exist. */
     public Shop getById(Long id) {
         Shop shop = shopMapper.selectById(id);
         if (shop == null) {
@@ -40,6 +46,7 @@ public class ShopService {
         return shop;
     }
 
+    /** Creates a new shop listing with its sold/comment/score counters reset to zero. */
     public Shop create(ShopUpsertRequest request) {
         Shop shop = new Shop();
         applyRequest(shop, request);
@@ -50,6 +57,7 @@ public class ShopService {
         return shop;
     }
 
+    /** Updates an existing shop's editable fields, leaving its sold/comment/score counters untouched. */
     public Shop update(Long id, ShopUpsertRequest request) {
         Shop shop = getById(id);
         applyRequest(shop, request);
@@ -57,6 +65,7 @@ public class ShopService {
         return shop;
     }
 
+    /** Checks whether the given user (if any) follows/has saved this shop. */
     public boolean isFollowedBy(Long shopId, Long userId) {
         if (userId == null) {
             return false;
@@ -66,6 +75,7 @@ public class ShopService {
                 .eq(ShopFollow::getUserId, userId));
     }
 
+    /** Adds the shop to the user's followed list, unless they already follow it. */
     public void follow(Long shopId, Long userId) {
         getById(shopId);
         if (isFollowedBy(shopId, userId)) {
@@ -77,12 +87,14 @@ public class ShopService {
         shopFollowMapper.insert(follow);
     }
 
+    /** Removes the shop from the user's followed list, if present. */
     public void unfollow(Long shopId, Long userId) {
         shopFollowMapper.delete(new LambdaQueryWrapper<ShopFollow>()
                 .eq(ShopFollow::getShopId, shopId)
                 .eq(ShopFollow::getUserId, userId));
     }
 
+    /** Copies the editable fields from the request DTO onto the entity, defaulting nullable text fields to empty strings. */
     private void applyRequest(Shop shop, ShopUpsertRequest request) {
         shop.setName(request.name());
         shop.setTypeId(request.typeId());
