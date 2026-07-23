@@ -49,21 +49,6 @@ export default function PostsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
-  async function toggleLike(postId: number) {
-    if (!user) return
-    try {
-      const res = await api.post<ApiResult<{ liked: number; likedByMe: boolean }>>(`/blog/${postId}/like`)
-      const data = res.data.data
-      if (data) {
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, liked: data.liked, likedByCurrentUser: data.likedByMe } : p)),
-        )
-      }
-    } catch {
-      // A failed like toggle isn't worth an error banner; the count just won't change.
-    }
-  }
-
   async function toggleFollowAuthor(authorId: number) {
     if (!user) return
     const currentlyFollowed = posts.find((p) => p.userId === authorId)?.authorFollowedByCurrentUser ?? false
