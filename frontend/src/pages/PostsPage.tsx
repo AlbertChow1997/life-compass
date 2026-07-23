@@ -81,6 +81,21 @@ export default function PostsPage() {
     }
   }
 
+  async function toggleLike(postId: number) {
+    if (!user) return
+    try {
+      const res = await api.post<ApiResult<{ liked: number; likedByMe: boolean }>>(`/blog/${postId}/like`)
+      const data = res.data.data
+      if (data) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, liked: data.liked, likedByCurrentUser: data.likedByMe } : p)),
+        )
+      }
+    } catch {
+      // A failed like toggle isn't worth an error banner; the count just won't change.
+    }
+  }
+
   async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
