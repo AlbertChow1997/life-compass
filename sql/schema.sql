@@ -86,7 +86,10 @@ CREATE TABLE `shop` (
 
 -- -----------------------------------------------------------------------------
 -- shop_rating — a user's star rating (1..5) + optional text for a shop.
--- One rating per user per shop; shop.score/comments are derived from this table.
+-- A user may rate the same shop again after a 30-day cooldown (enforced in
+-- the service layer, along with a 50-ratings-per-calendar-month cap), so
+-- this is a history of ratings, not one row per (shop, user); shop.score
+-- and shop.comments are derived by averaging every row for that shop.
 -- -----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `shop_rating`;
 CREATE TABLE `shop_rating` (
@@ -98,9 +101,8 @@ CREATE TABLE `shop_rating` (
     `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_shop_user` (`shop_id`, `user_id`),
-    KEY `idx_shop` (`shop_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'User star ratings for shops';
+    KEY `idx_shop_user` (`shop_id`, `user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'User star ratings for shops (history, not one-per-shop)';
 
 -- -----------------------------------------------------------------------------
 -- blog — a user post. May optionally reference a shop (shop_id) as a "shop link".

@@ -94,6 +94,9 @@ export default function UserMenu() {
                 <button type="button" onClick={() => go('/profile/shops')}>
                   Followed shops
                 </button>
+                <button type="button" onClick={() => go('/profile/ratings')}>
+                  My reviews
+                </button>
                 <button type="button" onClick={() => go('/profile/comments')}>
                   My comments
                 </button>

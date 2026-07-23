@@ -80,6 +80,61 @@
   margin-top: 12px;
 }
 
+/* ---- site banner (Shops & Posts pages): the hero unit itself — the page's
+   own <h1> sits immediately below with its top margin removed, so banner +
+   title read as one merged block instead of two stacked sections. ---- */
+.site-banner {
+  position: relative;
+  margin-top: 16px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.site-banner + .hero {
+  padding-top: 14px;
+}
+
+.site-banner img {
+  display: block;
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.site-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.35));
+}
+
+.site-banner-brand {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.site-banner-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: 'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive;
+  font-size: 34px;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 0 16px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
 .hero h1 {
   font-size: 34px;
   letter-spacing: -0.5px;
@@ -353,6 +408,10 @@
 
 .follow-button-active {
   border-color: var(--accent);
+  color: var(--accent);
+}
+
+.follow-text-active {
   color: var(--accent);
 }
 
@@ -946,5 +1005,19 @@
 
   .support-panel {
     width: min(320px, calc(100vw - 32px));
+  }
+
+  .site-banner img {
+    height: 120px;
+  }
+
+  .site-banner-brand {
+    top: 10px;
+    left: 12px;
+    font-size: 13px;
+  }
+
+  .site-banner-text {
+    font-size: 22px;
   }
 }

@@ -10,8 +10,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * A user's star rating (1..5) and optional review text for a shop.
- * One row per (shop, user).
+ * A user's star rating (1..5) and optional review text for a shop. A user
+ * may rate the same shop again after a cooldown, so this is a history of
+ * ratings, not a single record per (shop, user).
  */
 @Data
 @TableName("shop_rating")
@@ -34,4 +35,8 @@ public class ShopRating {
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    /** Shop name, joined for "my ratings" responses. */
+    @TableField(exist = false)
+    private String shopName;
 }

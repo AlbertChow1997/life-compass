@@ -1,11 +1,14 @@
 package com.albertchow.lifecompass.user;
 
+import com.albertchow.lifecompass.common.exception.BusinessException;
+import com.albertchow.lifecompass.common.exception.NotFoundException;
 import com.albertchow.lifecompass.entity.Blog;
 import com.albertchow.lifecompass.entity.BlogComment;
 import com.albertchow.lifecompass.entity.BlogLike;
 import com.albertchow.lifecompass.entity.Follow;
 import com.albertchow.lifecompass.entity.Shop;
 import com.albertchow.lifecompass.entity.ShopFollow;
+import com.albertchow.lifecompass.entity.ShopRating;
 import com.albertchow.lifecompass.entity.User;
 import com.albertchow.lifecompass.entity.Voucher;
 import com.albertchow.lifecompass.entity.VoucherOrder;
@@ -18,6 +21,7 @@ import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.UserMapper;
 import com.albertchow.lifecompass.mapper.VoucherMapper;
 import com.albertchow.lifecompass.mapper.VoucherOrderMapper;
+import com.albertchow.lifecompass.shop.ShopRatingService;
 import com.albertchow.lifecompass.user.dto.UpdateProfileRequest;
 import com.albertchow.lifecompass.user.dto.UserStatsResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -43,6 +47,7 @@ public class UserService {
     private final VoucherOrderMapper voucherOrderMapper;
     private final VoucherMapper voucherMapper;
     private final ExperienceService experienceService;
+    private final ShopRatingService shopRatingService;
 
     public UserStatsResponse getStats(Long userId) {
         long following = followMapper.selectCount(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId));
@@ -124,5 +129,44 @@ public class UserService {
             }
         }
         return orders;
+    }
+
+    public List<ShopRating> listMyRatings(Long userId) {
+        return shopRatingService.listMine(userId);
+    }
+
+    public void deleteRating(Long ratingId, Long userId) {
+        shopRatingService.deleteMine(ratingId, userId);
+    }
+
+    public void followUser(Long userId, Long targetUserId) {
+        if (userId.equals(targetUserId)) {
+            throw new BusinessException("You can't follow yourself");
+        }
+        if (userMapper.selectById(targetUserId) == null) {
+            throw new NotFoundException("User not found");
+        }
+        boolean alreadyFollowing = followMapper.exists(new LambdaQueryWrapper<Follow>()
+                .eq(Follow::getUserId, userId)
+                .eq(Follow::getFollowUserId, targetUserId));
+        if (alreadyFollowing) {
+            return;
+        }
+        Follow follow = new Follow();
+        follow.setUserId(userId);
+        follow.setFollowUserId(targetUserId);
+        followMapper.insert(follow);
+    }
+
+    public void unfollowUser(Long userId, Long targetUserId) {
+        followMapper.delete(new LambdaQueryWrapper<Follow>()
+                .eq(Follow::getUserId, userId)
+                .eq(Follow::getFollowUserId, targetUserId));
+    }
+
+    public boolean isFollowingUser(Long userId, Long targetUserId) {
+        return followMapper.exists(new LambdaQueryWrapper<Follow>()
+                .eq(Follow::getUserId, userId)
+                .eq(Follow::getFollowUserId, targetUserId));
     }
 }

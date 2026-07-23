@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api, type ApiResult } from '../api/client'
 import type { Shop, ShopType } from '../types'
 import { euro, firstImage, stars } from '../format'
+import Banner from '../components/Banner'
 
 /**
  * Browse shops with category filtering and name search (requirements 2 & 5).
@@ -56,6 +57,7 @@ export default function ShopListPage() {
 
   return (
     <section className="page">
+      <Banner />
       <div className="hero">
         <h1>Discover local spots in Ireland</h1>
         <p>Restaurants, pubs, cafes and live music — rated by the community.</p>

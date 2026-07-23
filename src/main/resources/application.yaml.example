@@ -1,0 +1,54 @@
+# Copy this file to application.yaml (gitignored) and fill in real values,
+# or leave application.yaml as-is and set these as environment variables
+# before running the app — every value below already reads from one.
+#
+#   DB_USERNAME, DB_PASSWORD          - MySQL credentials
+#   LIFECOMPASS_JWT_SECRET            - HMAC signing key for auth JWTs (32+ bytes)
+#   GOOGLE_CLIENT_ID                  - OAuth Web Client ID from Google Cloud Console
+#   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+#                                      - leave unset in local dev; SMS codes are
+#                                        logged to the console instead of sent
+server:
+  port: 8080
+
+spring:
+  application:
+    name: lifecompass-backend
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/lifecompass?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  docker:
+    compose:
+      enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+lifecompass:
+  jwt:
+    secret: ${LIFECOMPASS_JWT_SECRET:}
+    expiration-seconds: 604800 # 7 days
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-number: ${TWILIO_FROM_NUMBER:}

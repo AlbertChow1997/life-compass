@@ -5,12 +5,16 @@ import type { Blog, Shop } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { firstImage } from '../format'
 import PostComments from '../components/PostComments'
+import Banner from '../components/Banner'
+
+type FeedFilter = 'all' | 'following'
 
 /** Community posts feed (requirement 4): user recommendations, optionally linking a shop and an image. */
 export default function PostsPage() {
   const { user } = useAuth()
   const [posts, setPosts] = useState<Blog[]>([])
   const [shops, setShops] = useState<Shop[]>([])
+  const [filter, setFilter] = useState<FeedFilter>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null)
@@ -26,8 +30,9 @@ export default function PostsPage() {
     setLoading(true)
     setError(null)
     try {
+      const postsUrl = filter === 'following' ? '/blog?followedOnly=true' : '/blog'
       const [postsRes, shopsRes] = await Promise.all([
-        api.get<ApiResult<Blog[]>>('/blog'),
+        api.get<ApiResult<Blog[]>>(postsUrl),
         api.get<ApiResult<Shop[]>>('/shop'),
       ])
       setPosts(postsRes.data.data ?? [])
@@ -41,7 +46,8 @@ export default function PostsPage() {
 
   useEffect(() => {
     load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
 
   async function toggleLike(postId: number) {
     if (!user) return
@@ -55,6 +61,23 @@ export default function PostsPage() {
       }
     } catch {
       // A failed like toggle isn't worth an error banner; the count just won't change.
+    }
+  }
+
+  async function toggleFollowAuthor(authorId: number) {
+    if (!user) return
+    const currentlyFollowed = posts.find((p) => p.userId === authorId)?.authorFollowedByCurrentUser ?? false
+    try {
+      if (currentlyFollowed) {
+        await api.delete(`/user/${authorId}/follow`)
+      } else {
+        await api.post(`/user/${authorId}/follow`)
+      }
+      setPosts((prev) =>
+        prev.map((p) => (p.userId === authorId ? { ...p, authorFollowedByCurrentUser: !currentlyFollowed } : p)),
+      )
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Could not update follow status'))
     }
   }
 
@@ -100,10 +123,30 @@ export default function PostsPage() {
 
   return (
     <section className="page">
+      <Banner />
       <div className="hero">
         <h1>Community posts</h1>
         <p>Recommendations from locals across Ireland.</p>
       </div>
+
+      {user && (
+        <div className="account-toggle">
+          <button
+            className={filter === 'all' ? 'segment segment-active' : 'segment'}
+            type="button"
+            onClick={() => setFilter('all')}
+          >
+            All posts
+          </button>
+          <button
+            className={filter === 'following' ? 'segment segment-active' : 'segment'}
+            type="button"
+            onClick={() => setFilter('following')}
+          >
+            Following
+          </button>
+        </div>
+      )}
 
       {user ? (
         <form className="auth-form new-post-form" onSubmit={submitPost}>
@@ -159,6 +202,15 @@ export default function PostsPage() {
             <article key={post.id} className="post-card">
               <div className="post-head">
                 <span className="post-author">{post.authorName ?? 'Anonymous'}</span>
+                {user && user.userId !== post.userId && (
+                  <button
+                    className={post.authorFollowedByCurrentUser ? 'link-button follow-text-active' : 'link-button'}
+                    type="button"
+                    onClick={() => toggleFollowAuthor(post.userId)}
+                  >
+                    {post.authorFollowedByCurrentUser ? '✓ Following' : '+ Follow'}
+                  </button>
+                )}
                 {post.featured === 1 && <span className="badge">Featured</span>}
               </div>
               <h3>{post.title}</h3>
@@ -186,7 +238,12 @@ export default function PostsPage() {
               {expanded === post.id && <PostComments blogId={post.id} />}
             </article>
           ))}
-          {posts.length === 0 && <p className="muted">No posts yet — be the first to share a recommendation.</p>}
+          {posts.length === 0 && filter === 'following' && (
+            <p className="muted">No posts from people you follow yet — follow someone from the "All posts" tab.</p>
+          )}
+          {posts.length === 0 && filter === 'all' && (
+            <p className="muted">No posts yet — be the first to share a recommendation.</p>
+          )}
         </div>
       )}
     </section>

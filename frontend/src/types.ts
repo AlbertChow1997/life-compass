@@ -58,6 +58,7 @@ export interface Blog {
   authorName?: string
   authorIcon?: string
   likedByCurrentUser?: boolean
+  authorFollowedByCurrentUser?: boolean
   createTime?: string
 }
 
@@ -68,6 +69,7 @@ export interface ShopRating {
   score: number
   content: string
   createTime?: string
+  shopName?: string
 }
 
 export interface BlogComment {

@@ -25,8 +25,10 @@ public class BlogController {
     private final BlogService blogService;
 
     @GetMapping
-    public Result<List<Blog>> list(@RequestParam(required = false) Boolean featured) {
-        return Result.ok(blogService.list(featured));
+    public Result<List<Blog>> list(
+            @RequestParam(required = false) Boolean featured,
+            @RequestParam(required = false) Boolean followedOnly) {
+        return Result.ok(blogService.list(featured, followedOnly));
     }
 
     @GetMapping("/{id}")

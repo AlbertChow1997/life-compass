@@ -61,4 +61,8 @@ public class Blog {
     /** Whether the current viewer has liked this post. */
     @TableField(exist = false)
     private Boolean likedByCurrentUser;
+
+    /** Whether the current viewer follows this post's author. */
+    @TableField(exist = false)
+    private Boolean authorFollowedByCurrentUser;
 }

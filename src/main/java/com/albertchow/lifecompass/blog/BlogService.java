@@ -5,9 +5,11 @@ import com.albertchow.lifecompass.blog.dto.LikeResponse;
 import com.albertchow.lifecompass.common.exception.NotFoundException;
 import com.albertchow.lifecompass.entity.Blog;
 import com.albertchow.lifecompass.entity.BlogLike;
+import com.albertchow.lifecompass.entity.Follow;
 import com.albertchow.lifecompass.entity.User;
 import com.albertchow.lifecompass.mapper.BlogLikeMapper;
 import com.albertchow.lifecompass.mapper.BlogMapper;
+import com.albertchow.lifecompass.mapper.FollowMapper;
 import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.UserMapper;
 import com.albertchow.lifecompass.security.LoginUser;
@@ -31,6 +33,7 @@ public class BlogService {
     private final UserMapper userMapper;
     private final ShopMapper shopMapper;
     private final BlogLikeMapper likeMapper;
+    private final FollowMapper followMapper;
 
     public Blog create(Long userId, CreatePostRequest request) {
         if (request.shopId() != null && shopMapper.selectById(request.shopId()) == null) {
@@ -50,13 +53,26 @@ public class BlogService {
         return enrich(List.of(blog)).get(0);
     }
 
-    public List<Blog> list(Boolean featuredOnly) {
+    public List<Blog> list(Boolean featuredOnly, Boolean followedOnly) {
         var query = new LambdaQueryWrapper<Blog>()
                 .eq(Blog::getStatus, 1)
                 .orderByDesc(Blog::getFeatured)
                 .orderByDesc(Blog::getCreateTime);
         if (Boolean.TRUE.equals(featuredOnly)) {
             query.eq(Blog::getFeatured, 1);
+        }
+        if (Boolean.TRUE.equals(followedOnly)) {
+            LoginUser loginUser = UserContext.get();
+            if (loginUser == null) {
+                return List.of();
+            }
+            List<Long> followedIds = followMapper.selectList(
+                            new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, loginUser.id()))
+                    .stream().map(Follow::getFollowUserId).toList();
+            if (followedIds.isEmpty()) {
+                return List.of();
+            }
+            query.in(Blog::getUserId, followedIds);
         }
         return enrich(blogMapper.selectList(query));
     }
@@ -123,8 +139,15 @@ public class BlogService {
                             .eq(BlogLike::getUserId, loginUser.id())
                             .in(BlogLike::getBlogId, blogIds))
                     .stream().map(BlogLike::getBlogId).collect(Collectors.toSet());
+
+            Set<Long> followedAuthorIds = followMapper.selectList(new LambdaQueryWrapper<Follow>()
+                            .eq(Follow::getUserId, loginUser.id())
+                            .in(Follow::getFollowUserId, userIds))
+                    .stream().map(Follow::getFollowUserId).collect(Collectors.toSet());
+
             for (Blog blog : blogs) {
                 blog.setLikedByCurrentUser(likedBlogIds.contains(blog.getId()));
+                blog.setAuthorFollowedByCurrentUser(followedAuthorIds.contains(blog.getUserId()));
             }
         }
         return blogs;

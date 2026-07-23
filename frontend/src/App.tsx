@@ -18,6 +18,7 @@ import MyCommentsPage from './pages/MyCommentsPage'
 import MyPostsPage from './pages/MyPostsPage'
 import MyLikesPage from './pages/MyLikesPage'
 import MyOrdersPage from './pages/MyOrdersPage'
+import MyRatingsPage from './pages/MyRatingsPage'
 import './App.css'
 
 export default function App() {
@@ -69,6 +70,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <FollowedShopsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile/ratings"
+              element={
+                <RequireAuth>
+                  <MyRatingsPage />
                 </RequireAuth>
               }
             />
