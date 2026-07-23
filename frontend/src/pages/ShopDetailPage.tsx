@@ -19,23 +19,45 @@ export default function ShopDetailPage() {
 
   const [ratingScore, setRatingScore] = useState(5)
   const [ratingContent, setRatingContent] = useState('')
+  const [followed, setFollowed] = useState(false)
+  const [followBusy, setFollowBusy] = useState(false)
 
   async function load() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [shopRes, ratingsRes, vouchersRes] = await Promise.all([
+      const [shopRes, ratingsRes, vouchersRes, followRes] = await Promise.all([
         api.get<ApiResult<Shop>>(`/shop/${id}`),
         api.get<ApiResult<ShopRating[]>>(`/shop/${id}/ratings`),
         api.get<ApiResult<Voucher[]>>(`/voucher?shopId=${id}`),
+        api.get<ApiResult<{ followed: boolean }>>(`/shop/${id}/follow`),
       ])
       setShop(shopRes.data.data ?? null)
       setRatings(ratingsRes.data.data ?? [])
       setVouchers(vouchersRes.data.data ?? [])
+      setFollowed(followRes.data.data?.followed ?? false)
     } catch (err) {
       setLoadError(apiErrorMessage(err, 'Could not load this shop.'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function toggleFollow() {
+    if (!user) return
+    setFollowBusy(true)
+    try {
+      if (followed) {
+        await api.delete(`/shop/${id}/follow`)
+        setFollowed(false)
+      } else {
+        await api.post(`/shop/${id}/follow`)
+        setFollowed(true)
+      }
+    } catch (err) {
+      setMessage(apiErrorMessage(err, 'Could not update follow status'))
+    } finally {
+      setFollowBusy(false)
     }
   }
 
@@ -102,6 +124,16 @@ export default function ShopDetailPage() {
           <span className="muted">{shop.comments} ratings</span>
           <span className="price">{euro(shop.avgPrice)}/pp</span>
         </div>
+        {user && (
+          <button
+            className={followed ? 'btn-ghost follow-button-active' : 'btn-ghost'}
+            type="button"
+            onClick={toggleFollow}
+            disabled={followBusy}
+          >
+            {followed ? '✓ Following' : '+ Follow shop'}
+          </button>
+        )}
       </div>
 
       {message && <div className="notice">{message}</div>}

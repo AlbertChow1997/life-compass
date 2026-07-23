@@ -43,6 +43,21 @@ export default function PostsPage() {
     load()
   }, [])
 
+  async function toggleLike(postId: number) {
+    if (!user) return
+    try {
+      const res = await api.post<ApiResult<{ liked: number; likedByMe: boolean }>>(`/blog/${postId}/like`)
+      const data = res.data.data
+      if (data) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, liked: data.liked, likedByCurrentUser: data.likedByMe } : p)),
+        )
+      }
+    } catch {
+      // A failed like toggle isn't worth an error banner; the count just won't change.
+    }
+  }
+
   async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -152,7 +167,14 @@ export default function PostsPage() {
               )}
               <p className="post-content">{post.content}</p>
               <div className="card-meta">
-                <span className="muted">♥ {post.liked}</span>
+                <button
+                  className={post.likedByCurrentUser ? 'like-button like-button-active' : 'like-button'}
+                  type="button"
+                  onClick={() => toggleLike(post.id)}
+                  disabled={!user}
+                >
+                  {post.likedByCurrentUser ? '♥' : '♡'} {post.liked}
+                </button>
                 <button
                   className="link-button"
                   type="button"

@@ -16,6 +16,8 @@ interface AuthContextValue {
   loading: boolean
   login: (token: string) => Promise<void>
   logout: () => void
+  /** Re-fetches the profile without touching the token — call after editing it. */
+  refresh: () => Promise<void>
 }
 
 interface MeResponse {
@@ -71,7 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+  async function refresh() {
+    const profile = await fetchProfile()
+    setUser(profile)
+  }
+
+  return <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

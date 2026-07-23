@@ -1,15 +1,21 @@
 package com.albertchow.lifecompass.blog;
 
 import com.albertchow.lifecompass.blog.dto.CreatePostRequest;
+import com.albertchow.lifecompass.blog.dto.LikeResponse;
 import com.albertchow.lifecompass.common.exception.NotFoundException;
 import com.albertchow.lifecompass.entity.Blog;
+import com.albertchow.lifecompass.entity.BlogLike;
 import com.albertchow.lifecompass.entity.User;
+import com.albertchow.lifecompass.mapper.BlogLikeMapper;
 import com.albertchow.lifecompass.mapper.BlogMapper;
 import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.UserMapper;
+import com.albertchow.lifecompass.security.LoginUser;
+import com.albertchow.lifecompass.security.UserContext;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +30,7 @@ public class BlogService {
     private final BlogMapper blogMapper;
     private final UserMapper userMapper;
     private final ShopMapper shopMapper;
+    private final BlogLikeMapper likeMapper;
 
     public Blog create(Long userId, CreatePostRequest request) {
         if (request.shopId() != null && shopMapper.selectById(request.shopId()) == null) {
@@ -62,6 +69,34 @@ public class BlogService {
         return enrich(List.of(blog)).get(0);
     }
 
+    /** Toggles the current user's like on a post and keeps blog.liked in sync with the real count. */
+    @Transactional
+    public LikeResponse toggleLike(Long blogId, Long userId) {
+        if (!isVisible(blogMapper.selectById(blogId))) {
+            throw new NotFoundException("Post not found");
+        }
+        BlogLike existing = likeMapper.selectOne(new LambdaQueryWrapper<BlogLike>()
+                .eq(BlogLike::getBlogId, blogId)
+                .eq(BlogLike::getUserId, userId));
+        boolean nowLiked = existing == null;
+        if (existing != null) {
+            likeMapper.deleteById(existing.getId());
+        } else {
+            BlogLike like = new BlogLike();
+            like.setBlogId(blogId);
+            like.setUserId(userId);
+            likeMapper.insert(like);
+        }
+
+        long count = likeMapper.selectCount(new LambdaQueryWrapper<BlogLike>().eq(BlogLike::getBlogId, blogId));
+        Blog patch = new Blog();
+        patch.setId(blogId);
+        patch.setLiked((int) count);
+        blogMapper.updateById(patch);
+
+        return new LikeResponse((int) count, nowLiked);
+    }
+
     private boolean isVisible(Blog blog) {
         return blog != null && blog.getStatus() != null && blog.getStatus() == 1;
     }
@@ -78,6 +113,18 @@ public class BlogService {
             if (author != null) {
                 blog.setAuthorName(author.getNickName());
                 blog.setAuthorIcon(author.getIcon());
+            }
+        }
+
+        LoginUser loginUser = UserContext.get();
+        if (loginUser != null) {
+            Set<Long> blogIds = blogs.stream().map(Blog::getId).collect(Collectors.toSet());
+            Set<Long> likedBlogIds = likeMapper.selectList(new LambdaQueryWrapper<BlogLike>()
+                            .eq(BlogLike::getUserId, loginUser.id())
+                            .in(BlogLike::getBlogId, blogIds))
+                    .stream().map(BlogLike::getBlogId).collect(Collectors.toSet());
+            for (Blog blog : blogs) {
+                blog.setLikedByCurrentUser(likedBlogIds.contains(blog.getId()));
             }
         }
         return blogs;

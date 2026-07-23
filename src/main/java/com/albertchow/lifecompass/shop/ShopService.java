@@ -2,6 +2,8 @@ package com.albertchow.lifecompass.shop;
 
 import com.albertchow.lifecompass.common.exception.NotFoundException;
 import com.albertchow.lifecompass.entity.Shop;
+import com.albertchow.lifecompass.entity.ShopFollow;
+import com.albertchow.lifecompass.mapper.ShopFollowMapper;
 import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.shop.dto.ShopUpsertRequest;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,6 +17,7 @@ import java.util.List;
 public class ShopService {
 
     private final ShopMapper shopMapper;
+    private final ShopFollowMapper shopFollowMapper;
 
     /** Requirements 2 & 5: browse shops, optionally filtered by category and/or name. */
     public List<Shop> search(Long typeId, String name) {
@@ -52,6 +55,32 @@ public class ShopService {
         applyRequest(shop, request);
         shopMapper.updateById(shop);
         return shop;
+    }
+
+    public boolean isFollowedBy(Long shopId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return shopFollowMapper.exists(new LambdaQueryWrapper<ShopFollow>()
+                .eq(ShopFollow::getShopId, shopId)
+                .eq(ShopFollow::getUserId, userId));
+    }
+
+    public void follow(Long shopId, Long userId) {
+        getById(shopId);
+        if (isFollowedBy(shopId, userId)) {
+            return;
+        }
+        ShopFollow follow = new ShopFollow();
+        follow.setShopId(shopId);
+        follow.setUserId(userId);
+        shopFollowMapper.insert(follow);
+    }
+
+    public void unfollow(Long shopId, Long userId) {
+        shopFollowMapper.delete(new LambdaQueryWrapper<ShopFollow>()
+                .eq(ShopFollow::getShopId, shopId)
+                .eq(ShopFollow::getUserId, userId));
     }
 
     private void applyRequest(Shop shop, ShopUpsertRequest request) {

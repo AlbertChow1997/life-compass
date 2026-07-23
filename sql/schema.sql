@@ -192,4 +192,79 @@ CREATE TABLE `voucher_order` (
     KEY `idx_voucher` (`voucher_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'Voucher purchase orders';
 
+-- -----------------------------------------------------------------------------
+-- support_faq — admin-managed keyword -> auto-reply entries for the support
+-- widget. A user's question is matched against `keywords` (comma-separated,
+-- case-insensitive substring match) to find an answer.
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `support_faq`;
+CREATE TABLE `support_faq` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `keywords`    VARCHAR(255)    NOT NULL COMMENT 'Comma-separated keywords matched against a question',
+    `answer`      VARCHAR(2000)   NOT NULL COMMENT 'Auto-reply text',
+    `status`      TINYINT         NOT NULL DEFAULT 1 COMMENT '1 active, 0 inactive',
+    `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'Support widget auto-reply FAQ entries';
+
+-- -----------------------------------------------------------------------------
+-- support_message — every question asked via the support widget, whether or
+-- not a keyword matched. Lets admins see what customers are actually asking
+-- (and is the natural place to plug in an AI responder later).
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `support_message`;
+CREATE TABLE `support_message` (
+    `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `user_id`        BIGINT UNSIGNED DEFAULT NULL COMMENT 'FK -> user.id, null if asked while signed out',
+    `question`       VARCHAR(1000)   NOT NULL,
+    `matched_faq_id` BIGINT UNSIGNED DEFAULT NULL COMMENT 'FK -> support_faq.id, null if no keyword matched',
+    `answer_given`   VARCHAR(2000)   DEFAULT NULL COMMENT 'Snapshot of the answer shown, if any',
+    `create_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user` (`user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'Questions asked via the support widget';
+
+-- -----------------------------------------------------------------------------
+-- follow — user follows another user (social follow, not shop follow).
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `follow`;
+CREATE TABLE `follow` (
+    `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `user_id`        BIGINT UNSIGNED NOT NULL COMMENT 'FK -> user.id, the follower',
+    `follow_user_id` BIGINT UNSIGNED NOT NULL COMMENT 'FK -> user.id, the user being followed',
+    `create_time`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_follow` (`user_id`, `follow_user_id`),
+    KEY `idx_follow_user` (`follow_user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'User-to-user follows';
+
+-- -----------------------------------------------------------------------------
+-- shop_follow — a user saving/following a shop (surfaced as "Followed shops").
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `shop_follow`;
+CREATE TABLE `shop_follow` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `user_id`     BIGINT UNSIGNED NOT NULL COMMENT 'FK -> user.id',
+    `shop_id`     BIGINT UNSIGNED NOT NULL COMMENT 'FK -> shop.id',
+    `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_shop` (`user_id`, `shop_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'Shops a user follows/saves';
+
+-- -----------------------------------------------------------------------------
+-- blog_like — a user liking a post. blog.liked is a derived count kept in
+-- sync from this table (same pattern as shop_rating -> shop.score/comments).
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `blog_like`;
+CREATE TABLE `blog_like` (
+    `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+    `blog_id`     BIGINT UNSIGNED NOT NULL COMMENT 'FK -> blog.id',
+    `user_id`     BIGINT UNSIGNED NOT NULL COMMENT 'FK -> user.id',
+    `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_blog_user` (`blog_id`, `user_id`),
+    KEY `idx_user` (`user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = 'Post likes; also the input for experience-point calculation';
+
 SET FOREIGN_KEY_CHECKS = 1;
