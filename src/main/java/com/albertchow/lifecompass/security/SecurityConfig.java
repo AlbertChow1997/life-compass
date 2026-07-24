@@ -44,6 +44,10 @@ public class SecurityConfig {
                         // Let Boot's own error dispatch through, otherwise a route with no
                         // controller gets masked as 401 instead of a proper 404.
                         .requestMatchers("/error").permitAll()
+                        // Swagger UI and its generated OpenAPI JSON: public so every endpoint
+                        // can be browsed and tried without a token first (protected endpoints
+                        // still need a real Bearer token entered in the UI's "Authorize" dialog).
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         // Static images (shop photos, uploaded post photos) must be publicly
                         // readable: <img> tags never send an Authorization header.
                         .requestMatchers(HttpMethod.GET, "/images/**", "/uploads/**").permitAll()
