@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Image uploads for posts (requirement 4). Saved under the classpath static
- * resources directory so Spring's default static handler serves them back
- * immediately at {@code /uploads/<file>} — no object storage needed for local dev.
+ * Image uploads for posts (requirement 4). Files are saved to a project-root
+ * {@code uploads/} directory and served back at {@code /uploads/<file>} via
+ * {@link UploadResourceConfig} — no object storage needed for local dev.
  */
 @Slf4j
 @RestController
