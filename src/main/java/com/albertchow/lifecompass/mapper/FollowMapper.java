@@ -4,6 +4,7 @@ import com.albertchow.lifecompass.entity.Follow;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
+/** Data access for Follow rows (see {@link Follow}). */
 @Mapper
 public interface FollowMapper extends BaseMapper<Follow> {
 }

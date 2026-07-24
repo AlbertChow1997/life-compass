@@ -21,12 +21,12 @@ public class SupportMessage {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** FK -&gt; user.id, null if asked while signed out. */
+    /** FK -> user.id, null if asked while signed out. */
     private Long userId;
 
     private String question;
 
-    /** FK -&gt; support_faq.id, null if no keyword matched. */
+    /** FK -> support_faq.id, null if no keyword matched. */
     private Long matchedFaqId;
 
     /** Snapshot of the answer shown, if any. */

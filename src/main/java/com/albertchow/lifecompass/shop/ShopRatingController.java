@@ -29,7 +29,7 @@ public class ShopRatingController {
         return Result.ok(ratingService.list(shopId));
     }
 
-    /** One rating per user per shop; posting again updates the existing rating. */
+    /** Submits a new rating; capped at 50/month per user, with a 30-day cooldown per shop. */
     @PostMapping
     public Result<ShopRating> rate(@PathVariable Long shopId, @Valid @RequestBody RateShopRequest request) {
         Long userId = UserContext.require().id();

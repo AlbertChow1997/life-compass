@@ -10,7 +10,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * A business category, e.g. Restaurant, Pub &amp; Bar, Cinema.
+ * A business category, e.g. Restaurant, Pub & Bar, Cinema.
  */
 @Data
 @TableName("shop_type")

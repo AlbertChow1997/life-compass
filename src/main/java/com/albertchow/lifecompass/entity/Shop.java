@@ -23,10 +23,10 @@ public class Shop {
 
     private String name;
 
-    /** FK -&gt; shop_type.id. */
+    /** FK -> shop_type.id. */
     private Long typeId;
 
-    /** FK -&gt; user.id, the managing merchant (nullable). */
+    /** FK -> user.id, the managing merchant (nullable). */
     private Long ownerId;
 
     /** Comma-separated image URLs. */

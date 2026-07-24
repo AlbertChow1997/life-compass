@@ -34,6 +34,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
 
+    /** Defines the whole access-control policy: which routes are public, which need a role, and how auth/permission errors are rendered as JSON. */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -70,11 +71,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /** The hashing algorithm used to store and verify user passwords. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /** Writes a JSON {@link Result#fail} error body with the given HTTP status, matching the rest of the API's response shape. */
     private void writeError(HttpServletResponse res, int status, String message)
             throws IOException {
         res.setStatus(status);

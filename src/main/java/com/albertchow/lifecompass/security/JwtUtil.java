@@ -28,6 +28,7 @@ public class JwtUtil {
         this.expirationMillis = expirationSeconds * 1000;
     }
 
+    /** Builds a signed JWT encoding the user's ID and role, valid for the configured expiration window. */
     public String generate(Long userId, Role role) {
         Date now = new Date();
         return Jwts.builder()

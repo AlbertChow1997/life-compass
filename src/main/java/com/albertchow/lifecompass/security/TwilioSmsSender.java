@@ -34,10 +34,12 @@ public class TwilioSmsSender {
         }
     }
 
+    /** True if real Twilio credentials were supplied, i.e. SMS is actually sent rather than just logged. */
     public boolean isConfigured() {
         return configured;
     }
 
+    /** Sends the verification code by SMS via Twilio, or logs it locally when Twilio isn't configured. */
     public void send(String toPhone, String code) {
         String body = "Your LifeCompass verification code is " + code + ". It expires in 5 minutes.";
         if (!configured) {

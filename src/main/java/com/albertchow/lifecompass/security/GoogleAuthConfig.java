@@ -9,9 +9,15 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
 
+/**
+ * Wires up the Google ID token verifier used by {@link AuthController}'s
+ * Google sign-in endpoint to check that a token was really issued by Google
+ * for this app's client ID.
+ */
 @Configuration
 public class GoogleAuthConfig {
 
+    /** Builds the verifier that checks a Google ID token's signature and confirms it was issued for our app's client ID. */
     @Bean
     public GoogleIdTokenVerifier googleIdTokenVerifier(
             @Value("${lifecompass.google.client-id}") String clientId) {

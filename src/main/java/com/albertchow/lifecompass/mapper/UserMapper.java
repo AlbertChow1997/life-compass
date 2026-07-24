@@ -4,6 +4,7 @@ import com.albertchow.lifecompass.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
+/** Data access for User rows (see {@link User}). */
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
 }

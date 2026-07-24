@@ -5,8 +5,11 @@ package com.albertchow.lifecompass.common.enums;
  * Merchants toggle between {@link #ON_SHELF} and {@link #OFF_SHELF}.
  */
 public enum VoucherStatus {
+    /** Visible and purchasable by customers. */
     ON_SHELF(1),
+    /** Hidden by the merchant; not purchasable. */
     OFF_SHELF(2),
+    /** Past its end time; not purchasable. */
     EXPIRED(3);
 
     private final int code;

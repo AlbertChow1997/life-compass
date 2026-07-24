@@ -19,10 +19,10 @@ public class Blog {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /** FK -&gt; user.id (author). */
+    /** FK -> user.id (author). */
     private Long userId;
 
-    /** FK -&gt; shop.id, the optional linked shop (nullable). */
+    /** FK -> shop.id, the optional linked shop (nullable). */
     private Long shopId;
 
     private String title;

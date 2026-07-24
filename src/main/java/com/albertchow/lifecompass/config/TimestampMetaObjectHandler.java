@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Component
 public class TimestampMetaObjectHandler implements MetaObjectHandler {
 
+    /** Called by MyBatis-Plus before every insert; fills createTime and updateTime with the current time. */
     @Override
     public void insertFill(MetaObject metaObject) {
         LocalDateTime now = LocalDateTime.now();
@@ -21,6 +22,7 @@ public class TimestampMetaObjectHandler implements MetaObjectHandler {
         this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
     }
 
+    /** Called by MyBatis-Plus before every update; refreshes updateTime to the current time. */
     @Override
     public void updateFill(MetaObject metaObject) {
         this.strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
