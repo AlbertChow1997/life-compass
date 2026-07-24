@@ -7,6 +7,8 @@ import { AuthProvider } from './context/AuthContext'
 import ShopListPage from './pages/ShopListPage'
 import ShopDetailPage from './pages/ShopDetailPage'
 import PostsPage from './pages/PostsPage'
+import PeoplePage from './pages/PeoplePage'
+import ComingSoonPage from './pages/ComingSoonPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import MerchantVouchersPage from './pages/MerchantVouchersPage'
@@ -37,6 +39,8 @@ export default function App() {
             <Route path="/" element={<ShopListPage />} />
             <Route path="/shop/:id" element={<ShopDetailPage />} />
             <Route path="/posts" element={<PostsPage />} />
+            <Route path="/people" element={<PeoplePage />} />
+            <Route path="/coming-soon" element={<ComingSoonPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route

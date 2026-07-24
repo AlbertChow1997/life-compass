@@ -10,6 +10,7 @@ import com.albertchow.lifecompass.entity.VoucherOrder;
 import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.VoucherMapper;
 import com.albertchow.lifecompass.mapper.VoucherOrderMapper;
+import com.albertchow.lifecompass.shop.ShopCacheService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class VoucherService {
     private final VoucherMapper voucherMapper;
     private final VoucherOrderMapper voucherOrderMapper;
     private final ShopMapper shopMapper;
+    private final ShopCacheService shopCacheService;
 
     /** Lists vouchers currently on shelf, optionally filtered to one shop, newest first. */
     public List<Voucher> listOnShelf(Long shopId) {
@@ -93,6 +95,7 @@ public class VoucherService {
         shopMapper.update(null, new UpdateWrapper<Shop>()
                 .setSql("sold = sold + 1")
                 .eq("id", voucher.getShopId()));
+        shopCacheService.evict(voucher.getShopId());
 
         return order;
     }

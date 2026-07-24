@@ -20,6 +20,7 @@ export default function Navbar() {
           Shops
         </NavLink>
         <NavLink to="/posts">Posts</NavLink>
+        <NavLink to="/people">People</NavLink>
         {user?.role === 'MERCHANT' && <NavLink to="/merchant/vouchers">My Vouchers</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin/posts">Moderation</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin/support">Support</NavLink>}

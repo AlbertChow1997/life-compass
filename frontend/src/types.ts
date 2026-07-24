@@ -29,6 +29,8 @@ export interface Shop {
   comments: number
   score: number
   openHours: string
+  /** Distance from the query point in km; only set on /shop/nearby results. */
+  distanceKm?: number
 }
 
 export interface Voucher {
@@ -99,6 +101,14 @@ export interface UserStats {
   followers: number
   experience: number
   proThreshold: number
+}
+
+export interface UserSummary {
+  id: number
+  nickName: string
+  icon: string
+  city: string
+  followedByCurrentUser: boolean
 }
 
 export interface VoucherOrder {

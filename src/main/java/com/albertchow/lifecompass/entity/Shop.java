@@ -60,4 +60,8 @@ public class Shop {
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    /** Distance from the query point in km, populated only by nearby-search results. */
+    @TableField(exist = false)
+    private Double distanceKm;
 }

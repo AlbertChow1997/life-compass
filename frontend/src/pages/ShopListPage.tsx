@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type ApiResult } from '../api/client'
+import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Shop, ShopType } from '../types'
 import { euro, firstImage, stars } from '../format'
 import Banner from '../components/Banner'
 
 /**
  * Home page: browse all shops, filterable by category chip and free-text name
- * search. Fetches the category list and shop list from the backend once on
- * mount; filtering itself happens client-side. Shows a friendly message if the
- * backend can't be reached instead of a blank/broken page.
+ * search, or switch to a "Near me" view sorted by distance from the browser's
+ * geolocation. Fetches the category list and shop list from the backend once
+ * on mount; category/name filtering happens client-side on top of whichever
+ * list (all shops or nearby) is currently active. Shows a friendly message if
+ * the backend can't be reached instead of a blank/broken page.
  */
 export default function ShopListPage() {
   const [types, setTypes] = useState<ShopType[]>([])
   const [shops, setShops] = useState<Shop[]>([])
+  const [nearbyShops, setNearbyShops] = useState<Shop[] | null>(null)
+  const [nearbyLoading, setNearbyLoading] = useState(false)
+  const [nearbyError, setNearbyError] = useState<string | null>(null)
   const [activeType, setActiveType] = useState<number | null>(null)
   const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -51,15 +56,47 @@ export default function ShopListPage() {
     }
   }, [])
 
-  // Applies the category filter and search query client-side against the full
-  // shop list already loaded; recomputed only when the inputs actually change.
+  // Applies the category filter and search query client-side against whichever
+  // base list is active (all shops, or the nearby/distance-sorted list) —
+  // .filter() preserves the base list's order, so distance sorting survives.
   const visible = useMemo(() => {
-    return shops.filter((s) => {
+    const base = nearbyShops ?? shops
+    return base.filter((s) => {
       const byType = activeType == null || s.typeId === activeType
       const byName = s.name.toLowerCase().includes(query.trim().toLowerCase())
       return byType && byName
     })
-  }, [shops, activeType, query])
+  }, [shops, nearbyShops, activeType, query])
+
+  // Asks the browser for the user's location, then loads shops sorted by
+  // distance from it. Geolocation failures (denied permission, unsupported
+  // browser, timeout) show an inline message instead of breaking the page.
+  function findNearMe() {
+    setNearbyError(null)
+    if (!('geolocation' in navigator)) {
+      setNearbyError('Your browser does not support location search.')
+      return
+    }
+    setNearbyLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await api.get<ApiResult<Shop[]>>('/shop/nearby', {
+            params: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          })
+          setNearbyShops(res.data.data ?? [])
+        } catch (err) {
+          setNearbyError(apiErrorMessage(err, 'Could not load nearby shops'))
+        } finally {
+          setNearbyLoading(false)
+        }
+      },
+      () => {
+        setNearbyError('Could not get your location — check your browser’s location permission.')
+        setNearbyLoading(false)
+      },
+    )
+  }
 
   return (
     <section className="page">
@@ -67,12 +104,27 @@ export default function ShopListPage() {
       <div className="hero">
         <h1>Discover local spots in Ireland</h1>
         <p>Restaurants, pubs, cafes and live music — rated by the community.</p>
-        <input
-          className="search"
-          placeholder="Search by name…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="hero-search-row">
+          <input
+            className="search"
+            placeholder="Search by name…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button className="btn-ghost" type="button" onClick={findNearMe} disabled={nearbyLoading}>
+            {nearbyLoading ? 'Locating…' : '📍 Near me'}
+          </button>
+          {nearbyShops && (
+            <button className="link-button" type="button" onClick={() => setNearbyShops(null)}>
+              Clear
+            </button>
+          )}
+          <Link to="/coming-soon" className="btn-ghost" title="Takeaway ordering & movie reviews">
+            🍱 More — coming soon
+          </Link>
+        </div>
+        {nearbyError && <div className="notice notice-error">{nearbyError}</div>}
+        {nearbyShops && <p className="muted">Showing shops near you, closest first.</p>}
       </div>
 
       <div className="chips">
@@ -117,6 +169,7 @@ export default function ShopListPage() {
                     <span className="rating">★ {stars(s.score)}</span>
                     <span className="muted">{s.comments} ratings</span>
                     <span className="price">{euro(s.avgPrice)}/pp</span>
+                    {s.distanceKm != null && <span className="muted">{s.distanceKm} km away</span>}
                   </div>
                 </div>
               </div>

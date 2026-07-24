@@ -10,7 +10,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Handles shop listings: searching/browsing, admin create/update, and
@@ -23,6 +25,8 @@ public class ShopService {
 
     private final ShopMapper shopMapper;
     private final ShopFollowMapper shopFollowMapper;
+    private final ShopGeoService shopGeoService;
+    private final ShopCacheService shopCacheService;
 
     /** Searches shops, optionally filtered by category (typeId) and/or a name keyword, ranked by score. */
     public List<Shop> search(Long typeId, String name) {
@@ -37,12 +41,36 @@ public class ShopService {
         return shopMapper.selectList(query);
     }
 
-    /** Fetches a shop by ID, or throws NotFoundException if it doesn't exist. */
+    /** Finds shops within radiusKm of (lat, lng) via the Redis GEO index, nearest first, with distanceKm set on each. */
+    public List<Shop> searchNearby(double lat, double lng, double radiusKm) {
+        Map<Long, Double> distancesByShopId = shopGeoService.searchNearby(lat, lng, radiusKm);
+        if (distancesByShopId.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Shop> shopsById = shopMapper.selectByIds(distancesByShopId.keySet()).stream()
+                .collect(java.util.stream.Collectors.toMap(Shop::getId, s -> s));
+        List<Shop> ordered = new ArrayList<>();
+        for (Map.Entry<Long, Double> entry : distancesByShopId.entrySet()) {
+            Shop shop = shopsById.get(entry.getKey());
+            if (shop != null) {
+                shop.setDistanceKm(Math.round(entry.getValue() * 100) / 100.0);
+                ordered.add(shop);
+            }
+        }
+        return ordered;
+    }
+
+    /** Fetches a shop by ID (Redis-cached; see {@link ShopCacheService}), or throws NotFoundException if it doesn't exist. */
     public Shop getById(Long id) {
+        Shop cached = shopCacheService.get(id);
+        if (cached != null) {
+            return cached;
+        }
         Shop shop = shopMapper.selectById(id);
         if (shop == null) {
             throw new NotFoundException("Shop not found");
         }
+        shopCacheService.put(shop);
         return shop;
     }
 
@@ -54,6 +82,7 @@ public class ShopService {
         shop.setComments(0);
         shop.setScore(0);
         shopMapper.insert(shop);
+        shopGeoService.index(shop);
         return shop;
     }
 
@@ -62,6 +91,8 @@ public class ShopService {
         Shop shop = getById(id);
         applyRequest(shop, request);
         shopMapper.updateById(shop);
+        shopGeoService.index(shop);
+        shopCacheService.evict(id);
         return shop;
     }
 

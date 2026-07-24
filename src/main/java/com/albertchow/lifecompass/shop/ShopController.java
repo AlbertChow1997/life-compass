@@ -41,6 +41,16 @@ public class ShopController {
         return Result.ok(shopService.search(typeId, name));
     }
 
+    /** Lists shops within radiusKm of (lat, lng), nearest first, each with its distance set. */
+    @Operation(summary = "Find shops near a location, nearest first")
+    @GetMapping("/nearby")
+    public Result<List<Shop>> nearby(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "5") double radiusKm) {
+        return Result.ok(shopService.searchNearby(lat, lng, radiusKm));
+    }
+
     /** Fetches full details for a single shop. */
     @Operation(summary = "Get one shop's detail")
     @GetMapping("/{id}")

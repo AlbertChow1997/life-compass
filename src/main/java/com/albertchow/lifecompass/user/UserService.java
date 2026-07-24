@@ -21,15 +21,18 @@ import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.UserMapper;
 import com.albertchow.lifecompass.mapper.VoucherMapper;
 import com.albertchow.lifecompass.mapper.VoucherOrderMapper;
+import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.shop.ShopRatingService;
 import com.albertchow.lifecompass.user.dto.UpdateProfileRequest;
 import com.albertchow.lifecompass.user.dto.UserStatsResponse;
+import com.albertchow.lifecompass.user.dto.UserSummaryResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -184,5 +187,37 @@ public class UserService {
         return followMapper.exists(new LambdaQueryWrapper<Follow>()
                 .eq(Follow::getUserId, userId)
                 .eq(Follow::getFollowUserId, targetUserId));
+    }
+
+    /**
+     * Public user directory: every active account except the caller,
+     * optionally filtered by a nickname substring, each flagged with
+     * whether the current caller (if any) already follows them.
+     */
+    public List<UserSummaryResponse> listDirectory(String name) {
+        var query = new LambdaQueryWrapper<User>().eq(User::getStatus, 1);
+        var loginUser = UserContext.get();
+        if (loginUser != null) {
+            query.ne(User::getId, loginUser.id());
+        }
+        if (name != null && !name.isBlank()) {
+            query.like(User::getNickName, name.trim());
+        }
+        query.orderByDesc(User::getCreateTime);
+        List<User> users = userMapper.selectList(query);
+        if (users.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> followedIds = loginUser == null
+                ? Set.of()
+                : followMapper.selectList(new LambdaQueryWrapper<Follow>()
+                                .eq(Follow::getUserId, loginUser.id())
+                                .in(Follow::getFollowUserId, users.stream().map(User::getId).toList()))
+                        .stream().map(Follow::getFollowUserId).collect(Collectors.toSet());
+
+        return users.stream()
+                .map(u -> new UserSummaryResponse(u.getId(), u.getNickName(), u.getIcon(), u.getCity(), followedIds.contains(u.getId())))
+                .toList();
     }
 }

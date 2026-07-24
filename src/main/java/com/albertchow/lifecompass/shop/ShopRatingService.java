@@ -34,6 +34,7 @@ public class ShopRatingService {
 
     private final ShopRatingMapper shopRatingMapper;
     private final ShopMapper shopMapper;
+    private final ShopCacheService shopCacheService;
 
     /** Lists all ratings for a shop, newest first. */
     public List<ShopRating> list(Long shopId) {
@@ -131,5 +132,6 @@ public class ShopRatingService {
         patch.setComments(count);
         patch.setScore(scoreX10);
         shopMapper.updateById(patch);
+        shopCacheService.evict(shopId);
     }
 }

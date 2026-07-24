@@ -59,9 +59,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/config").permitAll()
                         // Support widget: works whether or not the visitor is signed in.
                         .requestMatchers(HttpMethod.POST, "/api/support/ask").permitAll()
-                        // Public browsing: shop directory, categories, posts, on-shelf vouchers (reqs 2, 4, 5).
+                        // Public browsing: shop directory, categories, posts, on-shelf vouchers (reqs 2, 4, 5),
+                        // and the /api/users people directory (distinct from the always-authenticated
+                        // /api/user/** personal-center prefix below).
                         .requestMatchers(HttpMethod.GET,
-                                "/api/shop/**", "/api/shop-type/**", "/api/blog/**", "/api/voucher/**")
+                                "/api/shop/**", "/api/shop-type/**", "/api/blog/**", "/api/voucher/**", "/api/users/**")
                         .permitAll()
                         .requestMatchers("/api/merchant/**").hasRole(Role.MERCHANT.name())
                         .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
