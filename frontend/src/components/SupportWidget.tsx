@@ -4,6 +4,7 @@ import { api, apiErrorMessage, type ApiResult } from '../api/client'
 interface ChatEntry {
   question: string
   answer: string
+  source: 'faq' | 'ai' | 'fallback'
 }
 
 /**
@@ -29,12 +30,13 @@ export default function SupportWidget() {
     setSending(true)
     setQuestion('')
     try {
-      const res = await api.post<ApiResult<{ answer: string; matched: boolean }>>('/support/ask', {
-        question: asked,
-      })
+      const res = await api.post<ApiResult<{ answer: string; matched: boolean; source: ChatEntry['source'] }>>(
+        '/support/ask',
+        { question: asked },
+      )
       const data = res.data.data
       if (data) {
-        setHistory((h) => [...h, { question: asked, answer: data.answer }])
+        setHistory((h) => [...h, { question: asked, answer: data.answer, source: data.source }])
       }
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not send your question'))
@@ -59,7 +61,14 @@ export default function SupportWidget() {
             {history.map((entry, i) => (
               <div key={i} className="support-entry">
                 <p className="support-question">{entry.question}</p>
-                <p className="support-answer">{entry.answer}</p>
+                <p className="support-answer">
+                  {entry.source !== 'fallback' && (
+                    <span className={`support-tag support-tag-${entry.source}`}>
+                      {entry.source === 'ai' ? 'AI' : 'FAQ'}
+                    </span>
+                  )}
+                  {entry.answer}
+                </p>
               </div>
             ))}
           </div>

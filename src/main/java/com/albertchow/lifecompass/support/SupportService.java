@@ -9,16 +9,19 @@ import com.albertchow.lifecompass.support.dto.SupportAnswerResponse;
 import com.albertchow.lifecompass.support.dto.SupportFaqRequest;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
  * Support widget: matches a user's question against admin-managed keyword
- * lists and logs every question asked (matched or not) for admin review.
- * {@code source_type}/AI hand-off is intentionally not modeled yet — this is
- * the seam where an AI responder would plug in later.
+ * lists first (fast, free, deterministic for questions an admin has already
+ * curated), falls back to a real AI answer via {@link DeepSeekClient} when
+ * nothing matches and a key is configured, and logs every question asked
+ * (matched, AI-answered, or neither) for admin review.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SupportService {
@@ -28,19 +31,49 @@ public class SupportService {
 
     private final SupportFaqMapper faqMapper;
     private final SupportMessageMapper messageMapper;
+    private final DeepSeekClient deepSeekClient;
 
-    /** Tries to match the question to an FAQ entry, logs the question either way, and returns the matched answer or a fallback message. */
+    /** Tries an FAQ match, then a real AI answer, then a generic fallback; logs the question either way. */
     public SupportAnswerResponse ask(String question, Long userId) {
         SupportFaq matched = findMatch(question);
+
+        String answer;
+        String source;
+        if (matched != null) {
+            answer = matched.getAnswer();
+            source = "faq";
+        } else if (deepSeekClient.isConfigured()) {
+            String aiAnswer = tryAi(question);
+            if (aiAnswer != null) {
+                answer = aiAnswer;
+                source = "ai";
+            } else {
+                answer = FALLBACK_ANSWER;
+                source = "fallback";
+            }
+        } else {
+            answer = FALLBACK_ANSWER;
+            source = "fallback";
+        }
 
         SupportMessage message = new SupportMessage();
         message.setUserId(userId);
         message.setQuestion(question);
         message.setMatchedFaqId(matched != null ? matched.getId() : null);
-        message.setAnswerGiven(matched != null ? matched.getAnswer() : null);
+        message.setAnswerGiven(answer);
         messageMapper.insert(message);
 
-        return new SupportAnswerResponse(matched != null ? matched.getAnswer() : FALLBACK_ANSWER, matched != null);
+        return new SupportAnswerResponse(answer, matched != null, source);
+    }
+
+    /** Calls DeepSeek and returns its answer, or null if the call fails — callers fall back to the generic message. */
+    private String tryAi(String question) {
+        try {
+            return deepSeekClient.ask(question);
+        } catch (RuntimeException e) {
+            log.warn("AI support answer failed, falling back to the generic message", e);
+            return null;
+        }
     }
 
     /** Finds the first active FAQ entry whose comma-separated keyword list contains a case-insensitive substring of the question. */

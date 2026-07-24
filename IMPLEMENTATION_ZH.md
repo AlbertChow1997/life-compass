@@ -206,9 +206,11 @@ erDiagram
 **`support_faq` / `support_message`**
 
 `support_faq.keywords` 是逗号分隔的关键词字符串（不是单独一张关键词表），匹配逻辑是应用层的
-大小写不敏感子串匹配（见 `SupportService.findMatch`），对这个项目的规模来说足够用，也为将来换成
-真正的 AI/向量检索留了迁移空间——`support_message` 已经把每一次问答都记录下来，不管有没有匹配到，
-这正是训练或评估未来 AI 客服所需要的语料。
+大小写不敏感子串匹配（见 `SupportService.findMatch`），对这个项目的规模来说足够用。**关键词匹配不到时**，
+`SupportService` 会转而调用 `DeepSeekClient` 请求一个真实的大模型回答（配置了 `DEEPSEEK_API_KEY`
+的情况下），调用失败或没配置 key 才会走最后的通用兜底文案——三条路径（`faq` / `ai` / `fallback`）
+都会通过 `support_message` 记下来，不管有没有匹配到，这正是训练或评估未来更强 AI 客服所需要的语料，
+现在也是真的在往那个方向走了（见第九节 9.8）。
 
 ---
 
@@ -488,6 +490,7 @@ MyBatis-Plus 会在生成 INSERT/UPDATE 语句前自动调用这个 Handler 把�
 /api/support/ask     公开（登录与否都能问）
 /api/admin/support/* 仅 ADMIN
 /api/user/*          全部需要登录（个人中心）
+/api/users           公开（浏览/搜索用户目录，和 /api/user 是两个不同前缀）
 /api/upload          需要登录
 ```
 
@@ -632,6 +635,9 @@ Redis 在这里被当成一个"带 TTL 的键值缓存"用，不是消息队列�
 验证码丢失（比如 Redis 重启），最坏后果只是用户要重新点一次"发送验证码"，不影响数据完整性,
 所以选它而不是写数据库表存验证码，图的就是原生 TTL 支持 + 不需要额外清理过期数据的定时任务。
 
+> 更新：Redis 现在不止存短信验证码了——`ShopCacheService`（店铺详情缓存）和 `ShopGeoService`
+> （附近搜索的 GEO 索引）也用的是这同一个 `StringRedisTemplate` Bean，分别见下面 9.6a 和 9.7。
+
 ### 9.5 MyBatis-Plus（`LambdaQueryWrapper` / `UpdateWrapper`）
 
 项目里绝大多数查询走 `LambdaQueryWrapper<T>`，好处是条件用方法引用写（`ShopRating::getUserId`
@@ -647,6 +653,74 @@ shopRatingMapper.selectCount(new LambdaQueryWrapper<ShopRating>()
 `sold` 计数）改用普通的 `UpdateWrapper` + `.setSql("stock = stock - 1")`——因为
 `LambdaQueryWrapper` 配合 `updateById` 是"读出整个对象再整行 UPDATE"的模式，没法表达
 "在数据库端做 `column = column - 1` 这种依赖当前值的原子运算"，必须手写 SQL 片段。
+
+### 9.6 `ShopCacheService`（店铺详情缓存）
+
+`ShopService.getById` 现在是"读穿透缓存"：先查 `StringRedisTemplate` 里 key 为
+`shop:detail:{id}` 的字符串（用注入的 `ObjectMapper` 手动做 JSON 序列化/反序列化，没有另外
+声明一个 `RedisTemplate<String, Object>` Bean，图的是不增加新配置），没命中才查 MySQL，
+查到后 `put` 回缓存（10 分钟 TTL）。
+
+比 TTL 更重要的是**主动失效**：任何会改变"店铺详情长什么样"的写路径，都要在写完之后调用
+`ShopCacheService.evict(shopId)`——`ShopService.update`（管理员改店铺信息）、
+`ShopRatingService.recomputeShopScore`（评分变化改了 `score`/`comments`）、
+`VoucherService.purchase`（购买改了 `sold`）三处都补了这一行。这是延续第六节反复出现的
+原则：**宁可主动失效，不要只靠 TTL 兜底**——否则用户刚提交一条评分，下一次刷新店铺页可能
+还看到旧分数，体验上是个明显的 bug，而不只是"数据稍微旧一点"。
+
+### 9.7 Redis GEO（附近搜索）
+
+`ShopGeoService` 把 `StringRedisTemplate.opsForGeo()` 包了一层，维护一个 key 叫 `shop:geo`
+的 GEO 集合，member 是店铺 id，位置是店铺的经纬度：
+
+```java
+// 写入/更新一个店铺的位置（GEOADD），店铺创建/编辑时都会调用
+geoOps().add("shop:geo", new Point(shop.getX(), shop.getY()), String.valueOf(shop.getId()));
+
+// 查询：以 (lat,lng) 为圆心、radiusKm 为半径，按距离升序返回
+geoOps().search("shop:geo",
+    GeoReference.fromCoordinate(lng, lat),
+    GeoShape.byRadius(new Distance(radiusKm, Metrics.KILOMETERS)),
+    GeoRadiusCommandArgs.newGeoRadiusArgs().includeDistance().sortAscending().limit(50));
+```
+
+索引不是靠迁移脚本建的，而是应用启动时用一个实现了 `ApplicationRunner` 的 Bean
+（`ShopGeoService` 自己）跑一遍全表 `SELECT`，把 MySQL 里已有的坐标一次性灌进 Redis——这样
+种子数据不需要额外写一个"初始化 GEO 索引"的 SQL 或迁移文件，重启应用就是重新建索引，天然幂等。
+拿到 Redis 返回的 id 列表后，还要回 MySQL 按这些 id 查完整的 `Shop` 对象（`selectByIds`），
+再把 GEO 返回的距离手动设进每个 `Shop` 的 `distanceKm` 瞬态字段——**顺序必须以 Redis 返回的
+顺序为准**，不能让 `selectByIds` 的结果重新按主键排序，不然"离得近的排前面"这个功能就白做了。
+
+### 9.8 DeepSeek（真正的 AI 客服）
+
+`DeepSeekClient` 没有引入官方 SDK，因为 DeepSeek 的接口是 OpenAI 兼容的纯 REST 接口，用
+Spring 6 / Boot 3.2 起自带的 `RestClient` 直接拼 JSON 请求体就够了，不需要多一个 Maven 依赖：
+
+```java
+restClient.post()
+    .uri("/chat/completions")
+    .body(Map.of(
+        "model", "deepseek-v4-flash",
+        "messages", List.of(
+            Map.of("role", "system", "content", SYSTEM_PROMPT),
+            Map.of("role", "user", "content", question)),
+        "stream", false))
+    .retrieve()
+    .body(ChatResponse.class);   // 一个只声明了 choices[0].message.content 的最小 record
+```
+
+联调时踩到一个坑：一开始按记忆里 OpenAI/DeepSeek 常见的模型名写的是 `"deepseek-chat"`，
+实际调用返回 `400 Bad Request`，报错信息说这个 key 只认 `deepseek-v4-pro` / `deepseek-v4-flash`
+两个模型名——不同的 DeepSeek 接入点（官方直连 vs. 第三方代理/网关）支持的模型名不一定一样，
+**不要假设一个"看起来眼熟"的模型名一定对，先用真实 key 跑一次最小请求确认实际支持哪些**，
+比对着记忆/文档里的名字瞎猜要快得多。
+
+`SupportService.ask` 的调用顺序是"关键词匹配 → AI → 兜底文案"三级：关键词命中最快最省钱，
+优先；没命中且配置了 `DEEPSEEK_API_KEY` 才去调 AI；AI 调用本身失败（网络问题、余额不足、
+返回格式不对）会被 `DeepSeekClient.ask` 包装成 `IllegalStateException` 抛出，`SupportService`
+接住之后照样退回通用兜底文案，不会让整个 `/api/support/ask` 请求 500——**外部 AI 服务只应该是
+体验的加分项，不能变成一个单点故障**。响应里新增的 `source` 字段（`"faq"|"ai"|"fallback"`）
+让前端能标出这条回复到底是哪条路径给的，方便演示时区分"这是关键词库答的"还是"这是真的 AI 答的"。
 
 ---
 

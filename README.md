@@ -24,6 +24,7 @@ text and stored data are in English.
 | Backend | Spring Boot 3.5, Java 17 |
 | Persistence | MySQL 8 via MyBatis-Plus, Redis (SMS codes, caching) |
 | Auth | Stateless JWT (jjwt), Google ID token verification, Twilio SMS, BCrypt |
+| AI | DeepSeek chat API for the support widget when no FAQ keyword matches (degrades to a generic reply if `DEEPSEEK_API_KEY` isn't set) |
 | Frontend | React 19, TypeScript, Vite, React Router, Axios |
 | Images | Uploaded via multipart to a local static/external directory, served by Spring |
 
@@ -88,7 +89,8 @@ Mapped to the original requirements, plus what was added along the way:
 
 1. **Login** — Google (ID token verification), Twilio SMS (code sent, verified against
    Redis), or email+password (any role, via self-registration or a seeded account).
-2. **Browse shops** — paginated-free list, filterable by category, searchable by name.
+2. **Browse shops** — paginated-free list, filterable by category, searchable by name, or
+   sorted by distance from the browser's location via a Redis GEO index ("Near me").
 3. **Rate shops** — 1–5 stars + optional text, capped to prevent spam (see below).
 4. **Posts** — title/content/optional photo/optional linked shop; likeable and
    commentable; a "Following" filter shows only posts from users you follow.
@@ -104,14 +106,18 @@ Built on top of the original scope:
 - **Personal center** — edit profile + avatar, view/delete own reviews, and lists of
   your posts, comments, liked posts, followed shops, and voucher orders.
 - **Experience points & PRO badge** — see [business rules](#business-rules-worth-knowing).
-- **User-to-user follow** — follow another user from their post; a "Following" tab
-  filters the feed. (There's no standalone "browse people" page — following currently
-  only happens from a post you're already looking at.)
-- **Support widget** — a floating chat bubble (bottom-right, works signed out) that
-  matches questions against admin-managed keyword→answer entries and logs every
-  question asked, matched or not, for admins to review. This is the seam where an AI
-  responder would plug in later.
+- **User-to-user follow** — follow another user from their post, or from the standalone
+  "People" directory page (`/people`, searchable by nickname); a "Following" tab on Posts
+  filters the feed.
+- **Support widget** — a floating chat bubble (bottom-right, works signed out) that first
+  matches questions against admin-managed keyword→answer entries, and falls back to a real
+  DeepSeek-generated answer when nothing matches (or a generic message if no API key is
+  configured). Every question is logged — matched, AI-answered, or neither — for admins to
+  review.
 - **Image upload** — for post photos and user avatars.
+- **Shop-detail caching** — `GET /api/shop/{id}` is Redis-cached (10-minute TTL) with
+  explicit eviction on every write that changes a shop's cached fields (admin edit, a new/
+  deleted rating, a voucher purchase), so cache hits never serve stale data.
 
 ## Business rules worth knowing
 
@@ -174,7 +180,8 @@ named where the route is restricted.
 | Method | Path | Access | Description |
 |---|---|---|---|
 | GET | `/` | public | List/search shops (`?typeId=&name=`). |
-| GET | `/{id}` | public | Shop detail. |
+| GET | `/nearby` | public | List shops near `?lat=&lng=` (optional `radiusKm=`, default 5), nearest first. |
+| GET | `/{id}` | public | Shop detail (Redis-cached). |
 | GET | `/{id}/follow` | public | Follow status (`false` if signed out). |
 | POST | `/{id}/follow` | auth | Follow a shop. |
 | DELETE | `/{id}/follow` | auth | Unfollow a shop. |
@@ -232,6 +239,12 @@ named where the route is restricted.
 | DELETE | `/api/admin/support/faq/{id}` | ADMIN | Delete an FAQ entry. |
 | GET | `/api/admin/support/messages` | ADMIN | List questions customers have asked. |
 
+### People directory — `/api/users`
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/` | public | Browse/search users by nickname (`?name=`); each result includes whether the current caller follows them. Deliberately a separate path prefix from `/api/user` below. |
+
 ### Personal center — `/api/user` (all require auth)
 
 | Method | Path | Description |
@@ -270,8 +283,9 @@ named where the route is restricted.
    `application.yaml` (gitignored) and fill in your DB credentials, or just export
    them as environment variables (the file already reads every secret from one):
    `DB_USERNAME`, `DB_PASSWORD`, `LIFECOMPASS_JWT_SECRET`, and optionally
-   `GOOGLE_CLIENT_ID` / `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER`
-   (leave the Twilio ones unset in dev — codes are logged instead of texted).
+   `GOOGLE_CLIENT_ID` / `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` /
+   `DEEPSEEK_API_KEY` (leave the Twilio ones unset in dev — codes are logged instead of
+   texted; leave `DEEPSEEK_API_KEY` unset to use only the FAQ + generic fallback).
 4. **Start the backend**: `./mvnw spring-boot:run` (serves on `:8080`).
 5. **Start the frontend**: `cd frontend && npm install && npm run dev` (serves on
    `:5173`, proxies `/api`, `/images`, `/uploads` to the backend — see
@@ -286,11 +300,12 @@ named where the route is restricted.
 
 Documented honestly rather than silently left out:
 
-- No page to browse/discover other users — following someone only happens from a post
-  of theirs you're already viewing.
-- The support widget only does keyword matching; the AI responder it's designed to
-  make room for isn't built yet (`support_message` already logs everything an AI
-  could later be trained/evaluated on).
-- Google login requires a real OAuth Client ID and Twilio requires a real account to
-  actually send SMS — both degrade gracefully without one (Google shows a "not
-  configured" message; SMS logs the code to the console).
+- Google login requires a real OAuth Client ID, Twilio requires a real account to
+  actually send SMS, and the support widget's AI path requires a real DeepSeek API
+  key — all three degrade gracefully without one (Google shows a "not configured"
+  message; SMS logs the code to the console; support falls back to a generic reply).
+- No daily check-in feature and no UV/visitor counting — both were in the original
+  Requirements Spec but were cut as low-value/disconnected from the rest of the app;
+  see `IMPLEMENTATION_ZH.md` for the reasoning.
+- Takeaway ordering and a movie/entertainment review category are stubbed as a
+  `/coming-soon` static page linked from the homepage, not actually built.

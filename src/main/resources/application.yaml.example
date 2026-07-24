@@ -8,6 +8,8 @@
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 #                                      - leave unset in local dev; SMS codes are
 #                                        logged to the console instead of sent
+#   DEEPSEEK_API_KEY                  - leave unset to use only the keyword-matched
+#                                        FAQ + generic fallback for the support widget
 server:
   port: 8080
 
@@ -52,3 +54,5 @@ lifecompass:
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_FROM_NUMBER:}
+  deepseek:
+    api-key: ${DEEPSEEK_API_KEY:}
