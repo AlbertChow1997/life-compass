@@ -2,6 +2,9 @@ package com.albertchow.lifecompass.upload;
 
 import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.common.exception.BusinessException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +24,8 @@ import java.util.UUID;
  * {@code uploads/} directory and served back at {@code /uploads/<file>} via
  * {@link UploadResourceConfig} — no object storage needed for local dev.
  */
+@Tag(name = "Uploads", description = "Image upload for posts and avatars")
+@SecurityRequirement(name = "bearerAuth")
 @Slf4j
 @RestController
 @RequestMapping("/api/upload")
@@ -41,6 +46,7 @@ public class FileUploadController {
     static final Path UPLOAD_DIR = Paths.get("uploads");
 
     /** Validates the file is a non-empty, allowed image type, saves it under a random name, and returns its public URL path. */
+    @Operation(summary = "Upload an image (JPEG/PNG/WEBP/GIF, max 8MB)")
     @PostMapping
     public Result<String> upload(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {

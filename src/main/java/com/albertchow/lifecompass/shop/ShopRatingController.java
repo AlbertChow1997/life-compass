@@ -4,6 +4,9 @@ import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.ShopRating;
 import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.shop.dto.RateShopRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /** Endpoints for viewing and submitting star ratings/reviews on a single shop. */
+@Tag(name = "Shop Ratings", description = "Star ratings/reviews on a single shop")
 @RestController
 @RequestMapping("/api/shop/{shopId}/ratings")
 @RequiredArgsConstructor
@@ -24,12 +28,15 @@ public class ShopRatingController {
     private final ShopRatingService ratingService;
 
     /** Lists all ratings left on this shop. */
+    @Operation(summary = "List a shop's ratings")
     @GetMapping
     public Result<List<ShopRating>> list(@PathVariable Long shopId) {
         return Result.ok(ratingService.list(shopId));
     }
 
     /** Submits a new rating; capped at 50/month per user, with a 30-day cooldown per shop. */
+    @Operation(summary = "Submit a rating (50/month cap, 30-day cooldown per shop)")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public Result<ShopRating> rate(@PathVariable Long shopId, @Valid @RequestBody RateShopRequest request) {
         Long userId = UserContext.require().id();

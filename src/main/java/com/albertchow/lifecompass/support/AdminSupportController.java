@@ -4,6 +4,9 @@ import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.SupportFaq;
 import com.albertchow.lifecompass.entity.SupportMessage;
 import com.albertchow.lifecompass.support.dto.SupportFaqRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +25,8 @@ import java.util.List;
  * the log of questions visitors have asked. All paths are under
  * /api/admin/**, which Spring Security restricts to ROLE_ADMIN (see SecurityConfig).
  */
+@Tag(name = "Admin - Support", description = "Admin-only FAQ management and message log (requires ROLE_ADMIN)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/admin/support")
 @RequiredArgsConstructor
@@ -30,24 +35,28 @@ public class AdminSupportController {
     private final SupportService supportService;
 
     /** Lists every FAQ entry, newest first. */
+    @Operation(summary = "List FAQ entries")
     @GetMapping("/faq")
     public Result<List<SupportFaq>> listFaq() {
         return Result.ok(supportService.listFaq());
     }
 
     /** Adds a new FAQ entry (keywords + answer) that the support widget can match questions against. */
+    @Operation(summary = "Create an FAQ entry")
     @PostMapping("/faq")
     public Result<SupportFaq> createFaq(@Valid @RequestBody SupportFaqRequest request) {
         return Result.ok(supportService.createFaq(request));
     }
 
     /** Updates an existing FAQ entry's keywords and answer. */
+    @Operation(summary = "Update an FAQ entry")
     @PutMapping("/faq/{id}")
     public Result<SupportFaq> updateFaq(@PathVariable Long id, @Valid @RequestBody SupportFaqRequest request) {
         return Result.ok(supportService.updateFaq(id, request));
     }
 
     /** Removes an FAQ entry entirely. */
+    @Operation(summary = "Delete an FAQ entry")
     @DeleteMapping("/faq/{id}")
     public Result<Void> deleteFaq(@PathVariable Long id) {
         supportService.deleteFaq(id);
@@ -55,6 +64,7 @@ public class AdminSupportController {
     }
 
     /** Lists every question visitors have submitted through the support widget, newest first. */
+    @Operation(summary = "List questions visitors have asked the support widget")
     @GetMapping("/messages")
     public Result<List<SupportMessage>> listMessages() {
         return Result.ok(supportService.listMessages());

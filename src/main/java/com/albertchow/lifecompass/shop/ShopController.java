@@ -5,6 +5,9 @@ import com.albertchow.lifecompass.entity.Shop;
 import com.albertchow.lifecompass.security.LoginUser;
 import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.shop.dto.FollowStatusResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +24,7 @@ import java.util.List;
  * them (saving a shop to your list). Ratings live separately in
  * {@link ShopRatingController}.
  */
+@Tag(name = "Shops", description = "Browse/search shops, and follow/unfollow one")
 @RestController
 @RequestMapping("/api/shop")
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class ShopController {
     private final ShopService shopService;
 
     /** Searches shops, optionally filtered by category (typeId) and/or a name keyword. */
+    @Operation(summary = "Search shops by category and/or name")
     @GetMapping
     public Result<List<Shop>> list(
             @RequestParam(required = false) Long typeId,
@@ -37,12 +42,14 @@ public class ShopController {
     }
 
     /** Fetches full details for a single shop. */
+    @Operation(summary = "Get one shop's detail")
     @GetMapping("/{id}")
     public Result<Shop> detail(@PathVariable Long id) {
         return Result.ok(shopService.getById(id));
     }
 
     /** Reports whether the current user follows this shop; signed-out visitors simply get followed=false rather than a 401. */
+    @Operation(summary = "Check whether the current user follows this shop")
     @GetMapping("/{id}/follow")
     public Result<FollowStatusResponse> followStatus(@PathVariable Long id) {
         LoginUser loginUser = UserContext.get();
@@ -51,6 +58,8 @@ public class ShopController {
     }
 
     /** Adds this shop to the current user's followed/saved list. */
+    @Operation(summary = "Follow (save) this shop")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{id}/follow")
     public Result<Void> follow(@PathVariable Long id) {
         Long userId = UserContext.require().id();
@@ -59,6 +68,8 @@ public class ShopController {
     }
 
     /** Removes this shop from the current user's followed/saved list. */
+    @Operation(summary = "Unfollow this shop")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}/follow")
     public Result<Void> unfollow(@PathVariable Long id) {
         Long userId = UserContext.require().id();

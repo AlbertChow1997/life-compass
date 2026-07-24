@@ -4,6 +4,9 @@ import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.Voucher;
 import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.voucher.dto.CreateVoucherRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +26,8 @@ import java.util.List;
  * under /api/merchant/**, which Spring Security restricts to ROLE_MERCHANT
  * (see SecurityConfig).
  */
+@Tag(name = "Merchant - Vouchers", description = "Merchant-only voucher management (requires ROLE_MERCHANT)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/merchant/voucher")
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class MerchantVoucherController {
     private final MerchantVoucherService merchantVoucherService;
 
     /** Lists the current merchant's own vouchers, optionally narrowed to one shop they own. */
+    @Operation(summary = "List the current merchant's own vouchers")
     @GetMapping
     public Result<List<Voucher>> mine(@RequestParam(required = false) Long shopId) {
         Long merchantId = UserContext.require().id();
@@ -38,6 +44,7 @@ public class MerchantVoucherController {
     }
 
     /** Creates a new voucher for a shop the current merchant owns. */
+    @Operation(summary = "Create a voucher for a shop the current merchant owns")
     @PostMapping
     public Result<Voucher> create(@Valid @RequestBody CreateVoucherRequest request) {
         Long merchantId = UserContext.require().id();
@@ -45,6 +52,7 @@ public class MerchantVoucherController {
     }
 
     /** Puts a voucher on or off shelf (i.e. makes it purchasable or not), if the current merchant owns its shop. */
+    @Operation(summary = "Toggle a voucher on/off shelf")
     @PutMapping("/{id}/shelf")
     public Result<Voucher> setShelf(@PathVariable Long id, @RequestParam boolean onShelf) {
         Long merchantId = UserContext.require().id();
