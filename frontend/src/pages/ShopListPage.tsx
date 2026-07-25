@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Shop, ShopType } from '../types'
@@ -27,9 +27,24 @@ export default function ShopListPage() {
   const [nearbyLoading, setNearbyLoading] = useState(false)
   const [nearbyError, setNearbyError] = useState<string | null>(null)
   const [radiusKm, setRadiusKm] = useState(5)
+  const [radiusMenuOpen, setRadiusMenuOpen] = useState(false)
+  const radiusMenuRef = useRef<HTMLDivElement>(null)
   const [activeType, setActiveType] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Closes the radius dropdown when the user clicks anywhere outside it —
+  // same pattern UserMenu.tsx uses for its own dropdown.
+  useEffect(() => {
+    if (!radiusMenuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (radiusMenuRef.current && !radiusMenuRef.current.contains(e.target as Node)) {
+        setRadiusMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [radiusMenuOpen])
 
   // Fetches categories and shops together on mount. `cancelled` guards against
   // setting state after the component has unmounted (e.g. user navigates away
@@ -66,6 +81,9 @@ export default function ShopListPage() {
   // Applies the category filter and search query client-side against whichever
   // base list is active (all shops, or the nearby/distance-sorted list) —
   // .filter() preserves the base list's order, so distance sorting survives.
+  // Near Me and the category chips are independent selections that combine
+  // (AND), not alternatives — picking a category while nearbyShops is set
+  // narrows the nearby results to that category rather than replacing them.
   const visible = useMemo(() => {
     const base = nearbyShops ?? shops
     return base.filter((s) => {
@@ -151,7 +169,12 @@ export default function ShopListPage() {
           All
         </button>
         <div className="near-me-control">
-          <button className="chip near-me-btn" type="button" onClick={findNearMe} disabled={nearbyLoading}>
+          <button
+            className={nearbyShops ? 'chip near-me-btn chip-active' : 'chip near-me-btn'}
+            type="button"
+            onClick={findNearMe}
+            disabled={nearbyLoading}
+          >
             {nearbyLoading ? 'Locating…' : '📍 Near me'}
             <span className="near-me-caret" aria-hidden="true">
               ▾

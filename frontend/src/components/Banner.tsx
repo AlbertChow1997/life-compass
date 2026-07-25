@@ -3,7 +3,9 @@ export default function Banner() {
   return (
     <div className="site-banner">
       <img src="/images/banner/ireland.jpg" alt="" />
-      <span className="site-banner-brand">◆ LifeCompass</span>
+      <span className="site-banner-brand">
+        <img className="site-banner-icon" src="/images/favicon.ico" alt="" /> LifeCompass
+      </span>
       <div className="site-banner-text">Enjoy your life in Ireland</div>
     </div>
   )

@@ -26,7 +26,9 @@
 }
 
 .brand-mark {
-  color: var(--accent);
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .topbar-search {
@@ -143,11 +145,21 @@
   position: absolute;
   top: 14px;
   left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #fff;
   font-weight: 700;
   font-size: 16px;
   letter-spacing: 0.3px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.site-banner-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 .site-banner-text {
@@ -228,6 +240,28 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  /* The select itself stays invisible (the caret is the visible trigger),
+     but browsers that support styling a native dropdown's open panel (e.g.
+     Chromium's <option> background/color support) still read these — so
+     the popup list, once opened, matches the app's font/colours instead of
+     the OS default. */
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-h);
+  background: var(--surface);
+}
+
+.near-me-radius-select option {
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 12px;
+  color: var(--text-h);
+  background: var(--surface);
+}
+
+.near-me-radius-select option:checked {
+  color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .chip-clear {

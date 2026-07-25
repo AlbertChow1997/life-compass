@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import UserMenu from './UserMenu'
 
 /**
- * Slim top bar shown on every page: the "◆" home mark, a shop/place search
- * box, and the signed-in user's avatar (or a sign-in link) on the far right.
+ * Slim top bar shown on every page: the favicon as a home mark, a shop/place
+ * search box, and the signed-in user's avatar (or a sign-in link) on the far right.
  * The wordmark itself lives on the Banner image (see Banner.tsx) rather than
  * here, so the brand name isn't shown twice.
  *
@@ -63,7 +63,7 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <NavLink to="/" className="brand" aria-label="LifeCompass home">
-        <span className="brand-mark">◆</span>
+        <img className="brand-mark" src="/images/favicon.ico" alt="" />
       </NavLink>
       <input
         className="topbar-search"
