@@ -30,6 +30,7 @@ CREATE TABLE `user` (
     `nick_name`   VARCHAR(32)     NOT NULL DEFAULT '' COMMENT 'Display name',
     `icon`        VARCHAR(255)    NOT NULL DEFAULT '' COMMENT 'Avatar URL',
     `city`        VARCHAR(64)     NOT NULL DEFAULT '' COMMENT 'City, collected at registration',
+    `bio`         VARCHAR(200)    NOT NULL DEFAULT '' COMMENT 'Short personal description, shown on the profile',
     `role`        VARCHAR(16)     NOT NULL DEFAULT 'USER' COMMENT 'USER | MERCHANT | ADMIN',
     `status`      TINYINT         NOT NULL DEFAULT 1 COMMENT '1 active, 0 banned',
     `create_time` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

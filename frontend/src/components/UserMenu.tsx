@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import type { UserStats } from '../types'
 
 /**
- * Avatar + dropdown in the navbar. Regular users get the full personal
+ * Avatar + dropdown in TopBar. Regular users get the full personal
  * center (follow/follower counts, XP bar, PRO badge, my-content links);
  * merchants/admins get a plain sign-out menu — they already have their own
  * role-specific nav links (My Vouchers / Moderation / Support).

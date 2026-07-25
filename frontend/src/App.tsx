@@ -1,5 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Navbar from './components/Navbar'
+import TopBar from './components/TopBar'
+import BannerSlot from './components/BannerSlot'
+import SecondaryNav from './components/SecondaryNav'
 import RequireRole from './components/RequireRole'
 import RequireAuth from './components/RequireAuth'
 import SupportWidget from './components/SupportWidget'
@@ -25,15 +27,18 @@ import './App.css'
 
 /**
  * Root component of the app: sets up global auth state, the client-side router,
- * and the page shell (navbar, main content area, floating support widget).
- * Routes under /merchant and /admin are gated by role via RequireRole, and
- * routes under /profile are gated to any logged-in user via RequireAuth.
+ * and the page shell (top bar, an optional Banner, secondary nav, main content
+ * area, floating support widget). Routes under /merchant and /admin are gated
+ * by role via RequireRole, and routes under /profile are gated to any
+ * logged-in user via RequireAuth.
  */
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
+        <TopBar />
+        <BannerSlot />
+        <SecondaryNav />
         <main className="container">
           <Routes>
             <Route path="/" element={<ShopListPage />} />

@@ -43,28 +43,31 @@ INSERT INTO `shop_type` (`id`, `name`, `icon`, `sort`) VALUES
 (7, 'Live Music',  '', 7),
 (8, 'Nightclub',   '', 8);
 
--- --- shops (20, across Dublin / Cork / Galway / Limerick / Kilkenny) --------
+-- --- shops (20; clustered near two reference points instead of scattered
+-- across the country, so "Near me" / place search have something real to
+-- find: ids 1-10 around National College of Ireland (IFSC, Dublin 1) and
+-- ids 11-20 around Dundrum Town Centre (Dublin 16)) --------------------------
 INSERT INTO `shop` (`id`, `name`, `type_id`, `owner_id`, `images`, `area`, `address`, `x`, `y`, `avg_price`, `sold`, `comments`, `score`, `open_hours`) VALUES
-(1,  'Temple Bar Bistro',    1, 2,    '/images/shops/1.jpg',  'Dublin',    '12 Temple Bar, Dublin 2',           -6.2635, 53.3455, 3500, 128, 0, 0, '12:00-23:00'),
-(2,  'Galway Bay Seafood',   1, NULL, '/images/shops/2.jpg',  'Galway',    '3 Quay St, Galway',                 -9.0530, 53.2700, 4200, 59,  0, 0, '12:00-22:00'),
-(3,  'The Shelbourne Grill', 1, NULL, '/images/shops/3.jpg',  'Dublin',    '27 St Stephen''s Green, Dublin 2',   -6.2591, 53.3381, 5500, 41,  0, 0, '17:00-22:30'),
-(4,  'Limerick Steakhouse',  1, NULL, '/images/shops/4.jpg',  'Limerick',  '8 O''Connell St, Limerick',          -8.6231, 52.6638, 4800, 33,  0, 0, '17:00-22:00'),
-(5,  'Cork Roast House',     2, 3,    '/images/shops/5.jpg',  'Cork',      '5 Oliver Plunkett St, Cork',         -8.4720, 51.8975, 1200, 76,  0, 0, '08:00-18:00'),
-(6,  'Bewley''s Cafe',       2, NULL, '/images/shops/6.jpg',  'Dublin',    '78 Grafton St, Dublin 2',            -6.2601, 53.3415, 1800, 260, 0, 0, '08:00-20:00'),
-(7,  'Kilkenny Coffee Co',   2, NULL, '/images/shops/7.jpg',  'Kilkenny',  '14 High St, Kilkenny',               -7.2561, 52.6541, 1400, 88,  0, 0, '08:00-17:30'),
-(8,  'The Brazen Head',      3, 4,    '/images/shops/8.jpg',  'Dublin',    '20 Lower Bridge St, Dublin 8',       -6.2770, 53.3447, 2500, 402, 0, 0, '11:00-00:30'),
-(9,  'Tigh Neachtain',       3, NULL, '/images/shops/9.jpg',  'Galway',    '17 Cross St, Galway',                -9.0568, 53.2712, 2200, 190, 0, 0, '11:00-23:30'),
-(10, 'The Long Valley',      3, NULL, '/images/shops/10.jpg', 'Cork',      '10 Winthrop St, Cork',               -8.4744, 51.8981, 2000, 145, 0, 0, '12:00-23:00'),
-(11, 'Eddie Rockets',        4, 5,    '/images/shops/11.jpg', 'Dublin',    '48 Grafton St, Dublin 2',            -6.2600, 53.3410, 1500, 890, 0, 0, '10:00-23:00'),
-(12, 'Supermac''s',          4, NULL, '/images/shops/12.jpg', 'Galway',    '1 Eyre Square, Galway',              -9.0490, 53.2745, 1000, 720, 0, 0, '09:00-01:00'),
-(13, 'The Bakehouse',        5, NULL, '/images/shops/13.jpg', 'Cork',      '2 Washington St, Cork',              -8.4790, 51.8965, 900,  180, 0, 0, '07:30-17:00'),
-(14, 'Cooke''s Bakery',      5, NULL, '/images/shops/14.jpg', 'Dublin',    '31 Wicklow St, Dublin 2',            -6.2618, 53.3427, 850,  210, 0, 0, '07:00-18:00'),
-(15, 'Light House Cinema',   6, NULL, '/images/shops/15.jpg', 'Dublin',    'Market Square, Smithfield, Dublin 7', -6.2779, 53.3477, 1300, 310, 0, 0, '11:00-23:00'),
-(16, 'Omniplex Cork',        6, NULL, '/images/shops/16.jpg', 'Cork',      'Mahon Point, Cork',                  -8.4319, 51.8837, 1200, 405, 0, 0, '11:00-23:30'),
-(17, 'Roisin Dubh',          7, NULL, '/images/shops/17.jpg', 'Galway',    'Dominick St Upper, Galway',          -9.0560, 53.2705, 2000, 140, 0, 0, '17:00-02:00'),
-(18, 'Whelan''s',            7, NULL, '/images/shops/18.jpg', 'Dublin',    '25 Wexford St, Dublin 2',            -6.2649, 53.3336, 2200, 265, 0, 0, '17:00-02:30'),
-(19, 'Coppers',               8, NULL, '/images/shops/19.jpg', 'Dublin',    '30 Harcourt St, Dublin 2',           -6.2635, 53.3345, 1000, 520, 0, 0, '23:00-03:00'),
-(20, 'Cyprus Avenue',        8, NULL, '/images/shops/20.jpg', 'Cork',      'Caroline St, Cork',                  -8.4738, 51.8977, 1500, 95,  0, 0, '21:00-02:30');
+(1,  'Temple Bar Bistro',    1, 2,    '/images/shops/1.jpg',  'Dublin 1 (IFSC)', 'Mayor Street Upper, Dublin 1',      -6.2387, 53.3483, 3500, 128, 0, 0, '12:00-23:00'),
+(2,  'Galway Bay Seafood',   1, NULL, '/images/shops/2.jpg',  'Dublin 1 (IFSC)', 'North Wall Quay, Dublin 1',         -6.2372, 53.3468, 4200, 59,  0, 0, '12:00-22:00'),
+(3,  'The Shelbourne Grill', 1, NULL, '/images/shops/3.jpg',  'Dublin 1 (IFSC)', 'Custom House Quay, Dublin 1',       -6.2412, 53.3493, 5500, 41,  0, 0, '17:00-22:30'),
+(4,  'Limerick Steakhouse',  1, NULL, '/images/shops/4.jpg',  'Dublin 1 (IFSC)', 'Guild Street, Dublin 1',            -6.2427, 53.3473, 4800, 33,  0, 0, '17:00-22:00'),
+(5,  'Cork Roast House',     2, 3,    '/images/shops/5.jpg',  'Dublin 1 (IFSC)', 'Excise Walk, Dublin 1',             -6.2392, 53.3503, 1200, 76,  0, 0, '08:00-18:00'),
+(6,  'Bewley''s Cafe',       2, NULL, '/images/shops/6.jpg',  'Dublin 1 (IFSC)', 'Sheriff Street Lower, Dublin 1',    -6.2357, 53.3458, 1800, 260, 0, 0, '08:00-20:00'),
+(7,  'Kilkenny Coffee Co',   2, NULL, '/images/shops/7.jpg',  'Dublin 1 (IFSC)', 'New Wapping Street, Dublin 1',      -6.2442, 53.3486, 1400, 88,  0, 0, '08:00-17:30'),
+(8,  'The Brazen Head',      3, 4,    '/images/shops/8.jpg',  'Dublin 1 (IFSC)', 'Commons Street, Dublin 1',          -6.2407, 53.3448, 2500, 402, 0, 0, '11:00-00:30'),
+(9,  'Tigh Neachtain',       3, NULL, '/images/shops/9.jpg',  'Dublin 1 (IFSC)', 'Castleforbes Road, Dublin 1',       -6.2377, 53.3513, 2200, 190, 0, 0, '11:00-23:30'),
+(10, 'The Long Valley',      3, NULL, '/images/shops/10.jpg', 'Dublin 1 (IFSC)', 'Mayor Street Lower, Dublin 1',      -6.2419, 53.3466, 2000, 145, 0, 0, '12:00-23:00'),
+(11, 'Eddie Rockets',        4, 5,    '/images/shops/11.jpg', 'Dundrum',   'Main Street, Dundrum, Dublin 16',        -6.2422, 53.2909, 1500, 890, 0, 0, '10:00-23:00'),
+(12, 'Supermac''s',          4, NULL, '/images/shops/12.jpg', 'Dundrum',   'Sandyford Road, Dundrum, Dublin 16',     -6.2414, 53.2893, 1000, 720, 0, 0, '09:00-01:00'),
+(13, 'The Bakehouse',        5, NULL, '/images/shops/13.jpg', 'Dundrum',   'Ballinteer Avenue, Dundrum, Dublin 16',  -6.2449, 53.2921, 900,  180, 0, 0, '07:30-17:00'),
+(14, 'Cooke''s Bakery',      5, NULL, '/images/shops/14.jpg', 'Dundrum',   'Taney Road, Dundrum, Dublin 14',         -6.2462, 53.2897, 850,  210, 0, 0, '07:00-18:00'),
+(15, 'Light House Cinema',   6, NULL, '/images/shops/15.jpg', 'Dundrum',   'Balally Hill, Dundrum, Dublin 16',       -6.2426, 53.2928, 1300, 310, 0, 0, '11:00-23:00'),
+(16, 'Omniplex Cork',        6, NULL, '/images/shops/16.jpg', 'Dundrum',   'Frankfort Avenue, Dundrum, Dublin 14',   -6.2399, 53.2881, 1200, 405, 0, 0, '11:00-23:30'),
+(17, 'Roisin Dubh',          7, NULL, '/images/shops/17.jpg', 'Dundrum',   'Dundrum Road, Dundrum, Dublin 14',       -6.2474, 53.2912, 2000, 140, 0, 0, '17:00-02:00'),
+(18, 'Whelan''s',            7, NULL, '/images/shops/18.jpg', 'Dundrum',   'Wyckham Way, Dundrum, Dublin 16',        -6.2446, 53.2871, 2200, 265, 0, 0, '17:00-02:30'),
+(19, 'Coppers',               8, NULL, '/images/shops/19.jpg', 'Dundrum',   'Meadowbrook Avenue, Dundrum, Dublin 16', -6.2412, 53.2941, 1000, 520, 0, 0, '23:00-03:00'),
+(20, 'Cyprus Avenue',        8, NULL, '/images/shops/20.jpg', 'Dundrum',   'Broadford Road, Dundrum, Dublin 16',    -6.2459, 53.2889, 1500, 95,  0, 0, '21:00-02:30');
 
 -- --- shop ratings (2 per shop; shop.comments/score are recomputed below) ----
 INSERT INTO `shop_rating` (`shop_id`, `user_id`, `score`, `content`) VALUES

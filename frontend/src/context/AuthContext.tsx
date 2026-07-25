@@ -11,7 +11,7 @@ export interface AuthUser {
   userId: number
   nickName: string
   role: Role
-  /** Avatar URL; empty when the account has none (Navbar falls back to an initial). */
+  /** Avatar URL; empty when the account has none (TopBar falls back to an initial). */
   icon: string
 }
 

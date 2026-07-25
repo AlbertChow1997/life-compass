@@ -5,7 +5,6 @@ import type { Blog, Shop } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { firstImage } from '../format'
 import PostComments from '../components/PostComments'
-import Banner from '../components/Banner'
 
 type FeedFilter = 'all' | 'following'
 
@@ -138,7 +137,6 @@ export default function PostsPage() {
 
   return (
     <section className="page">
-      <Banner />
       <div className="hero">
         <h1>Community posts</h1>
         <p>Recommendations from locals across Ireland.</p>

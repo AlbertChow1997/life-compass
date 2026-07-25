@@ -51,6 +51,15 @@ public class ShopController {
         return Result.ok(shopService.searchNearby(lat, lng, radiusKm));
     }
 
+    /** Geocodes a typed place name and lists shops within radiusKm of it, nearest first. */
+    @Operation(summary = "Find shops near a place name (geocoded), nearest first")
+    @GetMapping("/nearby-by-place")
+    public Result<List<Shop>> nearbyByPlace(
+            @RequestParam String place,
+            @RequestParam(defaultValue = "5") double radiusKm) {
+        return Result.ok(shopService.searchNearbyByPlace(place, radiusKm));
+    }
+
     /** Fetches full details for a single shop. */
     @Operation(summary = "Get one shop's detail")
     @GetMapping("/{id}")

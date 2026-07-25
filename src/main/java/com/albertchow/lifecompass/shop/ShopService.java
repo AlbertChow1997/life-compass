@@ -27,6 +27,7 @@ public class ShopService {
     private final ShopFollowMapper shopFollowMapper;
     private final ShopGeoService shopGeoService;
     private final ShopCacheService shopCacheService;
+    private final GeocodingService geocodingService;
 
     /** Searches shops, optionally filtered by category (typeId) and/or a name keyword, ranked by score. */
     public List<Shop> search(Long typeId, String name) {
@@ -58,6 +59,12 @@ public class ShopService {
             }
         }
         return ordered;
+    }
+
+    /** Geocodes a place name (e.g. "Dundrum") and finds shops within radiusKm of it, nearest first. */
+    public List<Shop> searchNearbyByPlace(String place, double radiusKm) {
+        var point = geocodingService.geocode(place);
+        return searchNearby(point.getY(), point.getX(), radiusKm);
     }
 
     /** Fetches a shop by ID (Redis-cached; see {@link ShopCacheService}), or throws NotFoundException if it doesn't exist. */

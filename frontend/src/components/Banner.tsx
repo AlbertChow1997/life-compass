@@ -1,4 +1,4 @@
-/** Shared brand banner (hero image + tagline) shown between the navbar and page content on Shops/Posts. Purely presentational, no props or state. */
+/** Shared brand banner (hero image + tagline) shown between TopBar and SecondaryNav on Shops/Posts (see BannerSlot.tsx). Purely presentational, no props or state. */
 export default function Banner() {
   return (
     <div className="site-banner">

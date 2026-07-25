@@ -1,26 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Shop, ShopType } from '../types'
 import { euro, firstImage, stars } from '../format'
-import Banner from '../components/Banner'
+
+const RADIUS_OPTIONS_KM = [1, 3, 5, 10]
 
 /**
  * Home page: browse all shops, filterable by category chip and free-text name
- * search, or switch to a "Near me" view sorted by distance from the browser's
- * geolocation. Fetches the category list and shop list from the backend once
- * on mount; category/name filtering happens client-side on top of whichever
- * list (all shops or nearby) is currently active. Shows a friendly message if
- * the backend can't be reached instead of a blank/broken page.
+ * search, or switch to a distance-sorted "nearby" view — either from the
+ * browser's own geolocation ("Near me") or by typing a place name into the
+ * TopBar search box and pressing Enter (geocoded server-side). The search
+ * text itself lives in the URL's `q` param (read/written by TopBar too, see
+ * TopBar.tsx) rather than local state, since the search box is now rendered
+ * globally, outside this page. Fetches the category list and shop list from
+ * the backend once on mount; category/name filtering happens client-side on
+ * top of whichever list (all shops or nearby) is currently active. Shows a
+ * friendly message if the backend can't be reached instead of a blank page.
  */
 export default function ShopListPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') ?? ''
   const [types, setTypes] = useState<ShopType[]>([])
   const [shops, setShops] = useState<Shop[]>([])
   const [nearbyShops, setNearbyShops] = useState<Shop[] | null>(null)
   const [nearbyLoading, setNearbyLoading] = useState(false)
   const [nearbyError, setNearbyError] = useState<string | null>(null)
+  const [radiusKm, setRadiusKm] = useState(5)
   const [activeType, setActiveType] = useState<number | null>(null)
-  const [query, setQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -82,7 +89,7 @@ export default function ShopListPage() {
       async (pos) => {
         try {
           const res = await api.get<ApiResult<Shop[]>>('/shop/nearby', {
-            params: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+            params: { lat: pos.coords.latitude, lng: pos.coords.longitude, radiusKm },
           })
           setNearbyShops(res.data.data ?? [])
         } catch (err) {
@@ -98,35 +105,43 @@ export default function ShopListPage() {
     )
   }
 
+  // Geocodes whatever place name is in the `q` param server-side, then loads
+  // shops sorted by distance from that place — lets someone search "Dundrum"
+  // or "NCI" without granting location permission.
+  async function searchByPlace(place: string) {
+    if (!place) return
+    setNearbyError(null)
+    setNearbyLoading(true)
+    try {
+      const res = await api.get<ApiResult<Shop[]>>('/shop/nearby-by-place', { params: { place, radiusKm } })
+      setNearbyShops(res.data.data ?? [])
+    } catch (err) {
+      setNearbyError(apiErrorMessage(err, `Could not find "${place}"`))
+    } finally {
+      setNearbyLoading(false)
+    }
+  }
+
+  // TopBar sets `near=1` as a one-shot signal after navigating here with a
+  // typed place name in `q` (pressing Enter in the search box) — run the
+  // geocode search once, then strip the trigger so it doesn't re-fire on
+  // every re-render or when the user edits `q` afterwards.
+  useEffect(() => {
+    if (searchParams.get('near') !== '1') return
+    searchByPlace(query)
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev)
+        params.delete('near')
+        return params
+      },
+      { replace: true },
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get('near')])
+
   return (
     <section className="page">
-      <Banner />
-      <div className="hero">
-        <h1>Discover local spots in Ireland</h1>
-        <p>Restaurants, pubs, cafes and live music — rated by the community.</p>
-        <div className="hero-search-row">
-          <input
-            className="search"
-            placeholder="Search by name…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button className="btn-ghost" type="button" onClick={findNearMe} disabled={nearbyLoading}>
-            {nearbyLoading ? 'Locating…' : '📍 Near me'}
-          </button>
-          {nearbyShops && (
-            <button className="link-button" type="button" onClick={() => setNearbyShops(null)}>
-              Clear
-            </button>
-          )}
-          <Link to="/coming-soon" className="btn-ghost" title="Takeaway ordering & movie reviews">
-            🍱 More — coming soon
-          </Link>
-        </div>
-        {nearbyError && <div className="notice notice-error">{nearbyError}</div>}
-        {nearbyShops && <p className="muted">Showing shops near you, closest first.</p>}
-      </div>
-
       <div className="chips">
         <button
           className={activeType == null ? 'chip chip-active' : 'chip'}
@@ -135,6 +150,28 @@ export default function ShopListPage() {
         >
           All
         </button>
+        <div className="near-me-control">
+          <button className="chip near-me-btn" type="button" onClick={findNearMe} disabled={nearbyLoading}>
+            {nearbyLoading ? 'Locating…' : '📍 Near me'}
+          </button>
+          <select
+            className="near-me-radius"
+            aria-label="Search radius"
+            value={radiusKm}
+            onChange={(e) => setRadiusKm(Number(e.target.value))}
+          >
+            {RADIUS_OPTIONS_KM.map((km) => (
+              <option key={km} value={km}>
+                {km} km
+              </option>
+            ))}
+          </select>
+        </div>
+        {nearbyShops && (
+          <button className="chip chip-clear" type="button" onClick={() => setNearbyShops(null)}>
+            ✕ Clear
+          </button>
+        )}
         {types.map((t) => (
           <button
             key={t.id}
@@ -146,6 +183,9 @@ export default function ShopListPage() {
           </button>
         ))}
       </div>
+
+      {nearbyError && <div className="notice notice-error">{nearbyError}</div>}
+      {nearbyShops && <p className="muted nearby-status">Showing shops near {query.trim() || 'you'}, closest first.</p>}
 
       {loading && <p className="muted">Loading…</p>}
       {error && <div className="notice">{error}</div>}
@@ -162,12 +202,12 @@ export default function ShopListPage() {
                 )}
                 <div className="card-body">
                   <h3>{s.name}</h3>
-                  <p className="muted">
+                  <p className="muted card-address" title={`${s.area} · ${s.address}`}>
                     {s.area} · {s.address}
                   </p>
                   <div className="card-meta">
                     <span className="rating">★ {stars(s.score)}</span>
-                    <span className="muted">{s.comments} ratings</span>
+                    <span className="muted card-meta-comments">{s.comments} ratings</span>
                     <span className="price">{euro(s.avgPrice)}/pp</span>
                     {s.distanceKm != null && <span className="muted">{s.distanceKm} km away</span>}
                   </div>

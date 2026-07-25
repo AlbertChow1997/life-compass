@@ -1,9 +1,13 @@
 /* ---- layout ---- */
-.navbar {
+
+/* Slim top bar: brand mark, search box, avatar — always visible, sticky.
+   Full-bleed background with internal padding (not the 1080px .container),
+   same treatment as .secondary-nav below it. */
+.topbar {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 14px 24px;
+  gap: 16px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -14,36 +18,63 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--text-h);
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .brand-mark {
   color: var(--accent);
 }
 
-.nav-links {
-  display: flex;
-  gap: 18px;
+.topbar-search {
+  flex: 1 1 auto;
+  min-width: 120px;
+  max-width: 480px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--muted-bg);
+  color: var(--text-h);
+  font: inherit;
 }
 
-.nav-links a {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 500;
-  padding: 4px 0;
-}
-
-.nav-links a.active {
-  color: var(--accent);
-  border-bottom: 2px solid var(--accent);
+.topbar-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .nav-actions {
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Second header row: primary section links, sits below the (optional)
+   Banner. Same full-bleed bar treatment as .topbar, one visual unit. */
+.secondary-nav {
+  display: flex;
+  gap: 18px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  overflow-x: auto;
+}
+
+.secondary-nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+
+.secondary-nav a.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
 }
 
 .btn-ghost {
@@ -51,7 +82,7 @@
   background: transparent;
   color: var(--text-h);
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   font: inherit;
   cursor: pointer;
 }
@@ -80,18 +111,18 @@
   margin-top: 12px;
 }
 
-/* ---- site banner (Shops & Posts pages): the hero unit itself — the page's
-   own <h1> sits immediately below with its top margin removed, so banner +
-   title read as one merged block instead of two stacked sections. ---- */
+/* ---- site banner (Shops & Posts pages), rendered by BannerSlot.tsx between
+   TopBar and SecondaryNav. .banner-shell reuses .container's box model so
+   the rounded banner lines up with the page content's width below it. ---- */
+.banner-shell {
+  padding-bottom: 0;
+}
+
 .site-banner {
   position: relative;
   margin-top: 16px;
   border-radius: 14px;
   overflow: hidden;
-}
-
-.site-banner + .hero {
-  padding-top: 14px;
 }
 
 .site-banner img {
@@ -145,14 +176,6 @@
   color: var(--text);
 }
 
-.hero-search-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
-}
-
 .search {
   width: 100%;
   max-width: 420px;
@@ -171,6 +194,46 @@
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
+/* "Near me" button + radius <select>, styled to match the category chips
+   next to it (pill-shaped, same height/font), joined into one control so
+   the select's native dropdown arrow reads as part of the "chip". Lives
+   inside .chips, right after "All" — see ShopListPage.tsx. */
+.near-me-control {
+  display: flex;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.near-me-btn {
+  border-radius: 999px 0 0 999px;
+  padding-right: 10px;
+  white-space: nowrap;
+}
+
+.near-me-radius {
+  border: 1px solid transparent;
+  border-radius: 0 999px 999px 0;
+  background: var(--muted-bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 15px;
+  padding: 6px 12px 6px 2px;
+  cursor: pointer;
+}
+
+.near-me-radius:focus {
+  outline: none;
+  color: var(--accent);
+}
+
+.chip-clear {
+  color: var(--text);
+}
+
+.nearby-status {
+  margin-top: 12px;
+}
+
 /* ---- category chips: horizontally scrollable, like a native app filter bar ---- */
 .chips {
   display: flex;
@@ -187,8 +250,8 @@
 .chip {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: var(--muted-bg);
   color: var(--text);
   padding: 6px 14px;
   border-radius: 999px;
@@ -200,10 +263,38 @@
   border-color: var(--accent);
 }
 
+/* Category chips (everything after "All") each get their own colour from a
+   small rotating palette, so the filter bar reads as lively/colourful at
+   rest instead of only lighting up once selected. */
+.chip:not(:first-of-type):nth-of-type(5n+2) {
+  background: var(--chip-1-bg);
+  color: var(--chip-1);
+}
+
+.chip:not(:first-of-type):nth-of-type(5n+3) {
+  background: var(--chip-2-bg);
+  color: var(--chip-2);
+}
+
+.chip:not(:first-of-type):nth-of-type(5n+4) {
+  background: var(--chip-3-bg);
+  color: var(--chip-3);
+}
+
+.chip:not(:first-of-type):nth-of-type(5n+5) {
+  background: var(--chip-4-bg);
+  color: var(--chip-4);
+}
+
+.chip:not(:first-of-type):nth-of-type(5n+1) {
+  background: var(--chip-5-bg);
+  color: var(--chip-5);
+}
+
 .chip-active {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -216,7 +307,7 @@
 
 .card {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface);
   overflow: hidden;
   transition: box-shadow 0.15s, transform 0.15s;
@@ -261,12 +352,30 @@
   margin-bottom: 6px;
 }
 
+/* Truncate with an ellipsis instead of wrapping to a second line — kicks in
+   automatically whenever the card is too narrow to fit the full address,
+   at any viewport size, no breakpoint needed. */
+.card-address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-meta {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-top: 12px;
   font-size: 14px;
+  min-width: 0;
+}
+
+.card-meta-comments {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .rating {
@@ -304,7 +413,7 @@
 
 .post-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface);
   padding: 18px 20px;
 }
@@ -425,19 +534,20 @@
 
 /* ---- buttons ---- */
 .btn-primary {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--bg);
-  padding: 8px 16px;
-  border-radius: 8px;
+  border: none;
+  background: var(--accent-gradient);
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 10px;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
   margin-top: 10px;
+  box-shadow: var(--shadow);
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .btn-primary:disabled {
@@ -588,7 +698,7 @@
   max-width: 560px;
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface);
 }
 
@@ -668,7 +778,7 @@
   font: inherit;
 }
 
-/* ---- navbar auth state: avatar + dropdown ---- */
+/* ---- topbar auth state: avatar + dropdown ---- */
 .user-menu {
   position: relative;
 }
@@ -971,28 +1081,26 @@
 
 /* ---- responsive: mobile ---- */
 @media (max-width: 640px) {
-  .navbar {
-    flex-wrap: wrap;
-    row-gap: 8px;
-    padding: 10px 16px;
+  .topbar {
+    padding: 10px 12px;
+    gap: 10px;
   }
 
-  /* Consolidate: brand takes its own full-width row; nav links + the
-     avatar/sign-in action share the second row. */
-  .brand {
-    flex-basis: 100%;
-  }
-
-  .nav-links {
-    flex: 1;
+  .topbar-search {
     min-width: 0;
+    max-width: none;
+    padding: 8px 12px;
+  }
+
+  .secondary-nav {
+    padding: 8px 16px;
+    gap: 14px;
     flex-wrap: nowrap;
     overflow-x: auto;
-    gap: 16px;
     scrollbar-width: none;
   }
 
-  .nav-links::-webkit-scrollbar {
+  .secondary-nav::-webkit-scrollbar {
     display: none;
   }
 
@@ -1025,6 +1133,12 @@
     flex-basis: 72px;
     width: 72px;
     height: 72px;
+  }
+
+  /* Narrow shop cards: drop the ratings count rather than let it wrap or
+     squeeze the price out — the star rating and price matter more here. */
+  .card-meta-comments {
+    display: none;
   }
 
   .support-widget {

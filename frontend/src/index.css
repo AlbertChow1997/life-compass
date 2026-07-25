@@ -1,15 +1,30 @@
 :root {
   --text: #5b6270;
-  --text-h: #0d1117;
+  --text-h: #10121a;
   --bg: #ffffff;
   --surface: #ffffff;
-  --muted-bg: #f6f7f9;
-  --border: #e6e8 eb;
-  --border: #e6e8eb;
-  --accent: #1f7a5c;
-  --accent-bg: rgba(31, 122, 92, 0.1);
-  --star: #e0a800;
-  --shadow: rgba(16, 24, 40, 0.06) 0 4px 12px;
+  --muted-bg: #f5f4fb;
+  --border: #e6e5f0;
+  --accent: #5b5fef;
+  --accent-2: #ff5c8a;
+  --accent-bg: rgba(91, 95, 239, 0.1);
+  --accent-gradient: linear-gradient(135deg, #5b5fef, #9f7aea);
+  --star: #f5a623;
+  --shadow: rgba(45, 30, 110, 0.08) 0 6px 20px;
+
+  /* Small rotating palette for category chips — cycled via nth-of-type in
+     App.css, so each shop category reads as its own colour instead of a
+     uniform gray pill. */
+  --chip-1: #5b5fef;
+  --chip-1-bg: rgba(91, 95, 239, 0.12);
+  --chip-2: #0891b2;
+  --chip-2-bg: rgba(8, 145, 178, 0.12);
+  --chip-3: #d97706;
+  --chip-3-bg: rgba(217, 119, 6, 0.12);
+  --chip-4: #db2777;
+  --chip-4-bg: rgba(219, 39, 119, 0.12);
+  --chip-5: #16a34a;
+  --chip-5-bg: rgba(22, 163, 74, 0.12);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -25,14 +40,27 @@
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #0f1116;
-    --surface: #161821;
-    --muted-bg: #1b1e27;
-    --border: #2a2e3a;
-    --accent: #34d399;
-    --accent-bg: rgba(52, 211, 153, 0.14);
+    --bg: #0f0f16;
+    --surface: #191a24;
+    --muted-bg: #1e1f2b;
+    --border: #2c2d3d;
+    --accent: #9b9eff;
+    --accent-2: #ff85a8;
+    --accent-bg: rgba(155, 158, 255, 0.16);
+    --accent-gradient: linear-gradient(135deg, #9b9eff, #c9a6ff);
     --star: #fbbf24;
-    --shadow: rgba(0, 0, 0, 0.4) 0 4px 14px;
+    --shadow: rgba(0, 0, 0, 0.45) 0 6px 20px;
+
+    --chip-1: #9b9eff;
+    --chip-1-bg: rgba(155, 158, 255, 0.16);
+    --chip-2: #22d3ee;
+    --chip-2-bg: rgba(34, 211, 238, 0.14);
+    --chip-3: #fbbf24;
+    --chip-3-bg: rgba(251, 191, 36, 0.14);
+    --chip-4: #f472b6;
+    --chip-4-bg: rgba(244, 114, 182, 0.14);
+    --chip-5: #4ade80;
+    --chip-5-bg: rgba(74, 222, 128, 0.14);
   }
 }
 
@@ -45,7 +73,13 @@ body {
 }
 
 h1,
-h2,
+h2 {
+  color: var(--text-h);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
 h3 {
   color: var(--text-h);
   font-weight: 600;
