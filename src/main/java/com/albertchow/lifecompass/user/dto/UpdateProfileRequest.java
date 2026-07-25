@@ -7,5 +7,7 @@ public record UpdateProfileRequest(
         @NotBlank String nickName,
         String city,
         /** URL previously returned by POST /api/upload; blank clears the current icon. */
-        String icon) {
+        String icon,
+        /** Short personal description, shown on the profile. */
+        String bio) {
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { levelBadge } from '../format'
 import type { UserStats } from '../types'
 
 /**
@@ -56,6 +57,7 @@ export default function UserMenu() {
   // bar is clamped to 100% so it never overflows once the user has already qualified.
   const isPro = stats != null && stats.experience >= stats.proThreshold
   const progressPct = stats ? Math.min(100, (stats.experience / stats.proThreshold) * 100) : 0
+  const level = stats ? levelBadge(stats.experience, stats.proThreshold) : null
 
   return (
     <div className="user-menu" ref={menuRef}>
@@ -73,6 +75,7 @@ export default function UserMenu() {
           {user.role === 'USER' && (
             <>
               <div className="profile-stats">
+                {user.bio && <p className="profile-bio">{user.bio}</p>}
                 <div className="profile-stats-row">
                   <div className="profile-stat">
                     <strong>{stats?.following ?? 0}</strong>
@@ -87,6 +90,11 @@ export default function UserMenu() {
                   <div className="xp-bar">
                     <div className="xp-bar-fill" style={{ width: `${progressPct}%` }} />
                   </div>
+                  {level && (
+                    <span className={level.isMax ? 'level-badge level-badge-max' : 'level-badge'}>
+                      {level.label}
+                    </span>
+                  )}
                   <span className={isPro ? 'pro-badge pro-badge-active' : 'pro-badge'}>PRO</span>
                 </div>
                 <p className="muted xp-label">{stats?.experience ?? 0} XP</p>

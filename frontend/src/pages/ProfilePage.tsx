@@ -7,6 +7,7 @@ interface MeResponse {
   nickName: string
   icon: string
   city?: string
+  bio?: string
   role: string
 }
 
@@ -19,6 +20,7 @@ export default function ProfilePage() {
   const { refresh } = useAuth()
   const [nickName, setNickName] = useState('')
   const [city, setCity] = useState('')
+  const [bio, setBio] = useState('')
   const [icon, setIcon] = useState('')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -34,6 +36,7 @@ export default function ProfilePage() {
         if (data) {
           setNickName(data.nickName)
           setCity(data.city ?? '')
+          setBio(data.bio ?? '')
           setIcon(data.icon)
         }
       })
@@ -67,7 +70,7 @@ export default function ProfilePage() {
     setMessage(null)
     setSaving(true)
     try {
-      await api.put('/user/profile', { nickName, city, icon })
+      await api.put('/user/profile', { nickName, city, icon, bio })
       await refresh()
       setMessage('Profile updated.')
     } catch (err) {
@@ -119,6 +122,16 @@ export default function ProfilePage() {
         <label>
           City
           <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Dublin" />
+        </label>
+        <label>
+          Bio
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="A short line about yourself…"
+            maxLength={200}
+            rows={3}
+          />
         </label>
 
         <button className="btn-primary" type="submit" disabled={saving || uploading}>

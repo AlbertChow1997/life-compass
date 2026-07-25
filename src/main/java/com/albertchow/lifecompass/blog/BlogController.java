@@ -33,14 +33,16 @@ public class BlogController {
 
     private final BlogService blogService;
 
-    /** Lists visible posts, optionally filtered to featured-only or to posts by people the current user follows. */
-    @Operation(summary = "List posts, optionally featured-only or following-only")
+    /** Lists visible posts, optionally filtered to featured-only, to posts by people the current user follows, or to one author. */
+    @Operation(summary = "List posts, optionally featured-only, following-only, or by one author")
     @GetMapping
     public Result<List<Blog>> list(
             @Parameter(description = "Only return admin-featured posts") @RequestParam(required = false) Boolean featured,
             @Parameter(description = "Only return posts by users the current user follows (requires auth; empty list otherwise)")
-            @RequestParam(required = false) Boolean followedOnly) {
-        return Result.ok(blogService.list(featured, followedOnly));
+            @RequestParam(required = false) Boolean followedOnly,
+            @Parameter(description = "Only return posts by this author id, e.g. for a public profile page")
+            @RequestParam(required = false) Long authorId) {
+        return Result.ok(blogService.list(featured, followedOnly, authorId));
     }
 
     /** Fetches a single post by ID. */

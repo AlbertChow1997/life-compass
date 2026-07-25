@@ -13,6 +13,8 @@ export interface AuthUser {
   role: Role
   /** Avatar URL; empty when the account has none (TopBar falls back to an initial). */
   icon: string
+  /** Short personal description; empty when not set. */
+  bio: string
 }
 
 interface AuthContextValue {
@@ -29,6 +31,7 @@ interface MeResponse {
   id: number
   nickName: string
   icon: string
+  bio?: string
   role: Role
 }
 
@@ -41,7 +44,7 @@ async function fetchProfile(): Promise<AuthUser | null> {
     const res = await api.get<ApiResult<MeResponse>>('/auth/me')
     const data = res.data.data
     if (!data) return null
-    return { userId: data.id, nickName: data.nickName, role: data.role, icon: data.icon }
+    return { userId: data.id, nickName: data.nickName, role: data.role, icon: data.icon, bio: data.bio ?? '' }
   } catch {
     return null
   }

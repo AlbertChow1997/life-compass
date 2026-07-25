@@ -24,6 +24,7 @@ import com.albertchow.lifecompass.mapper.VoucherOrderMapper;
 import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.shop.ShopRatingService;
 import com.albertchow.lifecompass.user.dto.UpdateProfileRequest;
+import com.albertchow.lifecompass.user.dto.UserProfileResponse;
 import com.albertchow.lifecompass.user.dto.UserStatsResponse;
 import com.albertchow.lifecompass.user.dto.UserSummaryResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -64,11 +65,26 @@ public class UserService {
         return new UserStatsResponse(following, followers, experience, ExperienceService.PRO_THRESHOLD);
     }
 
-    /** Updates nickname and city (always) and avatar icon (only if a new one was provided). */
+    /** Public profile for the "browse people" detail page: basic info, bio, XP/level data, and follow counts for any user. */
+    public UserProfileResponse getPublicProfile(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
+        long following = followMapper.selectCount(new LambdaQueryWrapper<Follow>().eq(Follow::getUserId, userId));
+        long followers = followMapper.selectCount(new LambdaQueryWrapper<Follow>().eq(Follow::getFollowUserId, userId));
+        long experience = experienceService.compute(userId);
+        return new UserProfileResponse(
+                user.getId(), user.getNickName(), user.getIcon(), user.getCity(), user.getBio(),
+                experience, ExperienceService.PRO_THRESHOLD, following, followers);
+    }
+
+    /** Updates nickname, city, and bio (always) and avatar icon (only if a new one was provided). */
     public User updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userMapper.selectById(userId);
         user.setNickName(request.nickName());
         user.setCity(request.city() != null ? request.city() : "");
+        user.setBio(request.bio() != null ? request.bio() : "");
         if (request.icon() != null) {
             user.setIcon(request.icon());
         }
@@ -216,8 +232,23 @@ public class UserService {
                                 .in(Follow::getFollowUserId, users.stream().map(User::getId).toList()))
                         .stream().map(Follow::getFollowUserId).collect(Collectors.toSet());
 
+        Map<Long, String> latestTitleByUserId = latestPostTitles(users.stream().map(User::getId).toList());
+
         return users.stream()
-                .map(u -> new UserSummaryResponse(u.getId(), u.getNickName(), u.getIcon(), u.getCity(), followedIds.contains(u.getId())))
+                .map(u -> new UserSummaryResponse(
+                        u.getId(), u.getNickName(), u.getIcon(), u.getCity(),
+                        followedIds.contains(u.getId()), latestTitleByUserId.get(u.getId())))
                 .toList();
+    }
+
+    /** Maps each of the given user ids to their single most recent visible post's title, if any. */
+    private Map<Long, String> latestPostTitles(List<Long> userIds) {
+        List<Map<String, Object>> rows = blogMapper.selectRecentTitlesByAuthors(userIds);
+        Map<Long, String> latestByUserId = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            Long userId = ((Number) row.get("userId")).longValue();
+            latestByUserId.putIfAbsent(userId, (String) row.get("title"));
+        }
+        return latestByUserId;
     }
 }

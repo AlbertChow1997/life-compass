@@ -153,9 +153,15 @@ export default function ShopListPage() {
         <div className="near-me-control">
           <button className="chip near-me-btn" type="button" onClick={findNearMe} disabled={nearbyLoading}>
             {nearbyLoading ? 'Locating…' : '📍 Near me'}
+            <span className="near-me-caret" aria-hidden="true">
+              ▾
+            </span>
           </button>
+          {/* Invisible, sits directly over the caret above — clicking the caret opens this
+              native select without a separate visible "5 km" box; changing it doesn't
+              search on its own, it just sets the radius the next "Near me" click uses. */}
           <select
-            className="near-me-radius"
+            className="near-me-radius-select"
             aria-label="Search radius"
             value={radiusKm}
             onChange={(e) => setRadiusKm(Number(e.target.value))}

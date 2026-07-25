@@ -6,6 +6,10 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 @Mapper
 public interface BlogMapper extends BaseMapper<Blog> {
 
@@ -23,4 +27,23 @@ public interface BlogMapper extends BaseMapper<Blog> {
             ) t
             """)
     long sumCappedDailyCount(@Param("userId") Long userId, @Param("cap") int cap);
+
+    /**
+     * Every visible post's id/author/title by the given authors, newest first.
+     * Callers (see {@code UserService.listDirectory}) keep only the first row
+     * seen per author to get "their most recent post" — simplest correct way
+     * to do a per-group "latest row" without a window function.
+     */
+    @Select("""
+            <script>
+            SELECT user_id AS userId, title
+            FROM blog
+            WHERE status = 1 AND user_id IN
+            <foreach item="id" collection="userIds" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+            ORDER BY create_time DESC
+            </script>
+            """)
+    List<Map<String, Object>> selectRecentTitlesByAuthors(@Param("userIds") Collection<Long> userIds);
 }

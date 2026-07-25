@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import type { UserSummary } from '../types'
@@ -35,7 +36,11 @@ export default function PeoplePage() {
     }
   }, [query])
 
-  async function toggleFollow(person: UserSummary) {
+  async function toggleFollow(person: UserSummary, e: MouseEvent) {
+    // The card itself is a <Link> to the person's profile; stop the click from
+    // bubbling into that navigation when it's actually meant for this button.
+    e.preventDefault()
+    e.stopPropagation()
     if (!user) return
     try {
       if (person.followedByCurrentUser) {
@@ -70,7 +75,7 @@ export default function PeoplePage() {
       {!loading && !error && (
         <div className="grid">
           {people.map((p) => (
-            <div key={p.id} className="card">
+            <Link key={p.id} to={`/people/${p.id}`} className="card card-link">
               <div className="card-row">
                 {p.icon ? (
                   <img className="avatar" src={p.icon} alt="" />
@@ -80,22 +85,23 @@ export default function PeoplePage() {
                 <div className="card-body">
                   <h3>{p.nickName}</h3>
                   {p.city && <p className="muted">{p.city}</p>}
+                  {p.latestPostTitle && <p className="muted person-latest-post">“{p.latestPostTitle}”</p>}
                 </div>
                 {user ? (
                   <button
                     className={p.followedByCurrentUser ? 'link-button follow-text-active' : 'link-button'}
                     type="button"
-                    onClick={() => toggleFollow(p)}
+                    onClick={(e) => toggleFollow(p, e)}
                   >
                     {p.followedByCurrentUser ? '✓ Following' : '+ Follow'}
                   </button>
                 ) : (
-                  <a className="link-button" href="/login">
+                  <a className="link-button" href="/login" onClick={(e) => e.stopPropagation()}>
                     Sign in to follow
                   </a>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
           {people.length === 0 && <p className="muted">No one matches your search.</p>}
         </div>

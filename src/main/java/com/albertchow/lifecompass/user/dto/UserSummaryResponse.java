@@ -7,5 +7,7 @@ public record UserSummaryResponse(
         String icon,
         String city,
         /** Whether the current caller follows this user; always false when signed out. */
-        boolean followedByCurrentUser) {
+        boolean followedByCurrentUser,
+        /** Title of this user's most recent visible post, or null if they haven't posted. */
+        String latestPostTitle) {
 }

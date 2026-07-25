@@ -10,6 +10,8 @@ public record UserDTO(
         /** URL of the profile picture, or null if not set. */
         String icon,
         String city,
+        /** Short personal description, shown on the profile. */
+        String bio,
         /** USER, MERCHANT, or ADMIN. */
         String role) {
 }

@@ -40,6 +40,9 @@ public class User {
     /** City, collected at registration. */
     private String city;
 
+    /** Short personal description, shown on the profile. */
+    private String bio;
+
     /** USER | MERCHANT | ADMIN. */
     private String role;
 

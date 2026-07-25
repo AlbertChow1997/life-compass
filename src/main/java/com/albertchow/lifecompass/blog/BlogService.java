@@ -58,14 +58,17 @@ public class BlogService {
         return enrich(List.of(blog)).get(0);
     }
 
-    /** Lists visible posts (featured ones first), optionally narrowed to featured-only or to authors the current user follows. */
-    public List<Blog> list(Boolean featuredOnly, Boolean followedOnly) {
+    /** Lists visible posts (featured ones first), optionally narrowed to featured-only, to authors the current user follows, or to one author (e.g. a public profile page). */
+    public List<Blog> list(Boolean featuredOnly, Boolean followedOnly, Long authorId) {
         var query = new LambdaQueryWrapper<Blog>()
                 .eq(Blog::getStatus, 1)
                 .orderByDesc(Blog::getFeatured)
                 .orderByDesc(Blog::getCreateTime);
         if (Boolean.TRUE.equals(featuredOnly)) {
             query.eq(Blog::getFeatured, 1);
+        }
+        if (authorId != null) {
+            query.eq(Blog::getUserId, authorId);
         }
         if (Boolean.TRUE.equals(followedOnly)) {
             LoginUser loginUser = UserContext.get();

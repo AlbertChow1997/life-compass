@@ -194,36 +194,40 @@
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-/* "Near me" button + radius <select>, styled to match the category chips
-   next to it (pill-shaped, same height/font), joined into one control so
-   the select's native dropdown arrow reads as part of the "chip". Lives
+/* "Near me" chip with a small caret instead of a separate "5 km" box — the
+   caret is plain text in the button's own font (no mismatch with a native
+   <select>'s font rendering), and an invisible <select> sits on top of just
+   the caret so it still opens a real dropdown to pick the radius. Lives
    inside .chips, right after "All" — see ShopListPage.tsx. */
 .near-me-control {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   flex-shrink: 0;
   scroll-snap-align: start;
 }
 
 .near-me-btn {
-  border-radius: 999px 0 0 999px;
-  padding-right: 10px;
+  border-radius: 999px;
+  padding-right: 30px;
   white-space: nowrap;
 }
 
-.near-me-radius {
-  border: 1px solid transparent;
-  border-radius: 0 999px 999px 0;
-  background: var(--muted-bg);
-  color: var(--text-h);
-  font: inherit;
-  font-size: 15px;
-  padding: 6px 12px 6px 2px;
-  cursor: pointer;
+.near-me-caret {
+  margin-left: 6px;
+  font-size: 10px;
+  opacity: 0.7;
 }
 
-.near-me-radius:focus {
-  outline: none;
-  color: var(--accent);
+.near-me-radius-select {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .chip-clear {
@@ -905,9 +909,69 @@
   background: var(--accent-bg);
 }
 
+/* Level badge (LV0..LV9, then MAX) sits just left of PRO — same pill shape,
+   same on/off colour treatment, so the two badges read as one family. */
+.level-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--muted-bg);
+}
+
+.level-badge-max {
+  color: #fff;
+  background: var(--accent-gradient);
+}
+
 .xp-label {
   margin-top: 6px;
   font-size: 12px;
+}
+
+.profile-bio {
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0 10px;
+  line-height: 1.4;
+}
+
+/* ---- public user profile page (UserProfilePage.tsx) ---- */
+.profile-header {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 24px 0;
+}
+
+.profile-header-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-header-body h1 {
+  font-size: 26px;
+}
+
+.profile-header .profile-stats-row {
+  margin: 14px 0 10px;
+}
+
+.profile-header .xp-row {
+  max-width: 320px;
+  margin-bottom: 14px;
+}
+
+.profile-posts-heading {
+  font-size: 18px;
+  margin: 8px 0 14px;
+}
+
+.person-latest-post {
+  font-style: italic;
+  font-size: 13px;
 }
 
 .user-dropdown-links {

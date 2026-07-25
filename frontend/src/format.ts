@@ -17,3 +17,16 @@ export function firstImage(images?: string): string | null {
   const first = images.split(',')[0]?.trim()
   return first || null
 }
+
+/**
+ * Maps XP onto a 10-level badge (LV0..LV9), each level `proThreshold / 10` XP
+ * wide, so the level system rides on the same threshold the PRO badge
+ * already uses instead of needing its own backend field. Once `experience`
+ * reaches `proThreshold` (the same moment PRO unlocks), the label becomes
+ * "MAX" instead of "LV9" and `isMax` flips to true for the colourful styling.
+ */
+export function levelBadge(experience: number, proThreshold: number): { label: string; isMax: boolean } {
+  if (experience >= proThreshold) return { label: 'MAX', isMax: true }
+  const level = Math.min(Math.floor(experience / (proThreshold / 10)), 9)
+  return { label: `LV${level}`, isMax: false }
+}

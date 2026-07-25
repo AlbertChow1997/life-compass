@@ -109,6 +109,21 @@ export interface UserSummary {
   icon: string
   city: string
   followedByCurrentUser: boolean
+  /** Title of this user's most recent visible post, or undefined if they haven't posted. */
+  latestPostTitle?: string
+}
+
+/** Public profile of one user (GET /api/users/{id}), used by UserProfilePage. */
+export interface UserProfile {
+  id: number
+  nickName: string
+  icon: string
+  city: string
+  bio: string
+  experience: number
+  proThreshold: number
+  following: number
+  followers: number
 }
 
 export interface VoucherOrder {
