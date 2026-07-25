@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Shop, ShopType } from '../types'
@@ -28,23 +29,43 @@ export default function ShopListPage() {
   const [nearbyError, setNearbyError] = useState<string | null>(null)
   const [radiusKm, setRadiusKm] = useState(5)
   const [radiusMenuOpen, setRadiusMenuOpen] = useState(false)
+  const [radiusMenuPos, setRadiusMenuPos] = useState<{ top: number; left: number } | null>(null)
   const radiusMenuRef = useRef<HTMLDivElement>(null)
+  const radiusDropdownRef = useRef<HTMLDivElement>(null)
   const [activeType, setActiveType] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Closes the radius dropdown when the user clicks anywhere outside it —
-  // same pattern UserMenu.tsx uses for its own dropdown.
+  // same pattern UserMenu.tsx uses for its own dropdown. Checks both the
+  // control and the dropdown itself, since the dropdown is portaled out to
+  // document.body (see toggleRadiusMenu below) and so is no longer a DOM
+  // descendant of radiusMenuRef.
   useEffect(() => {
     if (!radiusMenuOpen) return
     function handleClick(e: MouseEvent) {
-      if (radiusMenuRef.current && !radiusMenuRef.current.contains(e.target as Node)) {
-        setRadiusMenuOpen(false)
-      }
+      const target = e.target as Node
+      if (radiusMenuRef.current?.contains(target) || radiusDropdownRef.current?.contains(target)) return
+      setRadiusMenuOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [radiusMenuOpen])
+
+  // Opens the dropdown, first computing where to place it: it's rendered via
+  // a portal straight into document.body (not inside .chips) because .chips
+  // scrolls horizontally (overflow-x: auto), and CSS forces overflow-y to
+  // compute as auto too whenever overflow-x isn't visible — so anything
+  // absolutely positioned inside it, including this dropdown, would get
+  // silently clipped/covered by later content (e.g. the shop cards below)
+  // no matter how high its z-index was set.
+  function toggleRadiusMenu() {
+    if (!radiusMenuOpen && radiusMenuRef.current) {
+      const rect = radiusMenuRef.current.getBoundingClientRect()
+      setRadiusMenuPos({ top: rect.bottom + 8, left: rect.left })
+    }
+    setRadiusMenuOpen((v) => !v)
+  }
 
   // Fetches categories and shops together on mount. `cancelled` guards against
   // setting state after the component has unmounted (e.g. user navigates away
@@ -168,33 +189,56 @@ export default function ShopListPage() {
         >
           All
         </button>
-        <div className="near-me-control">
-          <button
-            className={nearbyShops ? 'chip near-me-btn chip-active' : 'chip near-me-btn'}
-            type="button"
-            onClick={findNearMe}
-            disabled={nearbyLoading}
-          >
-            {nearbyLoading ? 'Locating…' : '📍 Near me'}
-            <span className="near-me-caret" aria-hidden="true">
+        <div className="near-me-control" ref={radiusMenuRef}>
+          {/* .near-me-pill owns the capsule shape (rounded + clipped) around just the two
+              buttons; the dropdown below is a sibling, not a child, of that clipped pill —
+              otherwise its own overflow:hidden would clip the open dropdown panel too. */}
+          <div className="near-me-pill">
+            <button
+              className={nearbyShops ? 'chip near-me-btn chip-active' : 'chip near-me-btn'}
+              type="button"
+              onClick={findNearMe}
+              disabled={nearbyLoading}
+            >
+              {nearbyLoading ? 'Locating…' : '📍 Near me'}
+            </button>
+            {/* Small custom dropdown instead of a native <select> — a native select's open
+                panel can't be styled consistently across browsers, so this uses the same
+                popover look as the other chips/dropdowns in the app instead. */}
+            <button
+              className="near-me-caret-btn"
+              type="button"
+              aria-label="Choose search radius"
+              aria-expanded={radiusMenuOpen}
+              onClick={toggleRadiusMenu}
+            >
               ▾
-            </span>
-          </button>
-          {/* Invisible, sits directly over the caret above — clicking the caret opens this
-              native select without a separate visible "5 km" box; changing it doesn't
-              search on its own, it just sets the radius the next "Near me" click uses. */}
-          <select
-            className="near-me-radius-select"
-            aria-label="Search radius"
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(Number(e.target.value))}
-          >
-            {RADIUS_OPTIONS_KM.map((km) => (
-              <option key={km} value={km}>
-                {km} km
-              </option>
-            ))}
-          </select>
+            </button>
+          </div>
+          {radiusMenuOpen &&
+            radiusMenuPos &&
+            createPortal(
+              <div
+                className="radius-dropdown"
+                ref={radiusDropdownRef}
+                style={{ position: 'fixed', top: radiusMenuPos.top, left: radiusMenuPos.left }}
+              >
+                {RADIUS_OPTIONS_KM.map((km) => (
+                  <button
+                    key={km}
+                    type="button"
+                    className={km === radiusKm ? 'radius-option radius-option-active' : 'radius-option'}
+                    onClick={() => {
+                      setRadiusKm(km)
+                      setRadiusMenuOpen(false)
+                    }}
+                  >
+                    {km} km
+                  </button>
+                ))}
+              </div>,
+              document.body,
+            )}
         </div>
         {nearbyShops && (
           <button className="chip chip-clear" type="button" onClick={() => setNearbyShops(null)}>

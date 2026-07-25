@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Handles browsing and purchasing shop vouchers: validity checks (on-shelf,
@@ -90,6 +91,10 @@ public class VoucherService {
         order.setPayType(1);
         order.setStatus(OrderStatus.PAID.code());
         order.setPayTime(now);
+        // Shown to the customer as a QR + text after purchase; a merchant redeems it by
+        // this code alone (see MerchantVoucherService.redeemByCode), the same "show the
+        // code at checkout" pattern group-buy apps use.
+        order.setVerifyCode(String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000)));
         voucherOrderMapper.insert(order);
 
         shopMapper.update(null, new UpdateWrapper<Shop>()

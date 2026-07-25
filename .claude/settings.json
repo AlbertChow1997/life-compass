@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -NoProfile -Command 'Get-Process | Where-Object { $_.ProcessName -match '\\\\''java'\\\\'' } | Select-Object Id, ProcessName, StartTime')",
+      "Bash(powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object -ExpandProperty OwningProcess\")",
+      "Bash(powershell -NoProfile -Command \"Get-CimInstance Win32_Process -Filter 'ProcessId = 51456' | Select-Object CommandLine\")",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 51456 -Force\")",
+      "Bash(cd \"c:\\\\Users\\\\52522\\\\OneDrive\\\\Desktop\\\\NCI CSHD\\\\S3\\\\Project\\\\life-compass\")",
+      "Bash(export JAVA_HOME=\"/d/Java_learn/JDK\")",
+      "Bash(export DB_PASSWORD='886152')",
+      "Bash(nohup ./mvnw -o spring-boot:run)",
+      "Bash(disown)"
+    ]
+  }
+}

@@ -135,6 +135,8 @@ export interface VoucherOrder {
   status: number
   createTime?: string
   payTime?: string
+  /** Redemption code shown as a QR + text once paid; a merchant redeems the voucher by this code alone. */
+  verifyCode?: string
   voucherTitle?: string
   shopName?: string
 }

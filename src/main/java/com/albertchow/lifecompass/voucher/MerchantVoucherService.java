@@ -1,17 +1,21 @@
 package com.albertchow.lifecompass.voucher;
 
+import com.albertchow.lifecompass.common.enums.OrderStatus;
 import com.albertchow.lifecompass.common.enums.VoucherStatus;
 import com.albertchow.lifecompass.common.exception.BusinessException;
 import com.albertchow.lifecompass.common.exception.NotFoundException;
 import com.albertchow.lifecompass.entity.Shop;
 import com.albertchow.lifecompass.entity.Voucher;
+import com.albertchow.lifecompass.entity.VoucherOrder;
 import com.albertchow.lifecompass.mapper.ShopMapper;
 import com.albertchow.lifecompass.mapper.VoucherMapper;
+import com.albertchow.lifecompass.mapper.VoucherOrderMapper;
 import com.albertchow.lifecompass.voucher.dto.CreateVoucherRequest;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -25,6 +29,7 @@ import java.util.List;
 public class MerchantVoucherService {
 
     private final VoucherMapper voucherMapper;
+    private final VoucherOrderMapper voucherOrderMapper;
     private final ShopMapper shopMapper;
 
     /** Creates a new voucher on-shelf for a shop, after confirming the merchant owns that shop. */
@@ -82,6 +87,43 @@ public class MerchantVoucherService {
             query.eq(Voucher::getShopId, shopId);
         }
         return voucherMapper.selectList(query.orderByDesc(Voucher::getCreateTime));
+    }
+
+    /**
+     * Redeems a customer's voucher order by the code shown on their order (a QR + text pair,
+     * see VoucherService.purchase and MyOrdersPage.tsx) — looked up by the code alone, the
+     * customer never sees or needs to know the underlying order id. Confirms the current
+     * merchant owns the shop the voucher belongs to before marking it used.
+     */
+    public VoucherOrder redeemByCode(Long merchantId, String verifyCode) {
+        VoucherOrder order = voucherOrderMapper.selectOne(
+                new LambdaQueryWrapper<VoucherOrder>().eq(VoucherOrder::getVerifyCode, verifyCode));
+        if (order == null) {
+            throw new NotFoundException("No voucher found for this code");
+        }
+        if (order.getStatus() != null && order.getStatus() == OrderStatus.USED.code()) {
+            throw new BusinessException("This voucher has already been redeemed");
+        }
+        if (order.getStatus() == null || order.getStatus() != OrderStatus.PAID.code()) {
+            throw new BusinessException("This voucher isn't valid for redemption");
+        }
+
+        Voucher voucher = voucherMapper.selectById(order.getVoucherId());
+        if (voucher == null) {
+            throw new NotFoundException("Voucher not found");
+        }
+        Shop shop = requireOwnedShop(merchantId, voucher.getShopId());
+
+        VoucherOrder patch = new VoucherOrder();
+        patch.setId(order.getId());
+        patch.setStatus(OrderStatus.USED.code());
+        patch.setUseTime(LocalDateTime.now());
+        voucherOrderMapper.updateById(patch);
+
+        order.setStatus(OrderStatus.USED.code());
+        order.setVoucherTitle(voucher.getTitle());
+        order.setShopName(shop.getName());
+        return order;
     }
 
     /** Fetches a shop and verifies the given merchant is its owner, throwing if the shop is missing or owned by someone else. */

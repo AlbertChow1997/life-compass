@@ -29,6 +29,9 @@ public class VoucherOrder {
     /** 1 unpaid, 2 paid, 3 used, 4 cancelled, 5 refunded. */
     private Integer status;
 
+    /** Redemption code shown to the customer as a QR + text, looked up by merchants to redeem via MerchantVoucherService.redeemByCode. */
+    private String verifyCode;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

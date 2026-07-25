@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
-import type { Shop, Voucher } from '../types'
+import type { Shop, Voucher, VoucherOrder } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { euro } from '../format'
 
@@ -20,6 +20,10 @@ export default function MerchantVouchersPage() {
   const [title, setTitle] = useState('')
   const [payValue, setPayValue] = useState('')
   const [actualValue, setActualValue] = useState('')
+
+  const [redeemCode, setRedeemCode] = useState('')
+  const [redeemMessage, setRedeemMessage] = useState<string | null>(null)
+  const [redeemError, setRedeemError] = useState<string | null>(null)
 
   // Loads this merchant's vouchers plus the full shop list (there's no "my shops"
   // endpoint, so we filter all shops down to the ones this user owns).
@@ -80,6 +84,22 @@ export default function MerchantVouchersPage() {
     }
   }
 
+  // Redeems a customer's voucher by the code they show at checkout — the same code shown
+  // as a QR + text on their MyOrdersPage order once purchased.
+  async function redeemVoucher(e: FormEvent) {
+    e.preventDefault()
+    setRedeemMessage(null)
+    setRedeemError(null)
+    try {
+      const res = await api.post<ApiResult<VoucherOrder>>('/merchant/voucher/redeem', { verifyCode: redeemCode.trim() })
+      const order = res.data.data
+      setRedeemMessage(`Redeemed: ${order?.voucherTitle ?? 'voucher'} for ${order?.shopName ?? 'your shop'}.`)
+      setRedeemCode('')
+    } catch (err) {
+      setRedeemError(apiErrorMessage(err, 'Could not redeem this code'))
+    }
+  }
+
   if (loading) {
     return (
       <section className="page">
@@ -96,6 +116,23 @@ export default function MerchantVouchersPage() {
       </div>
 
       {message && <div className="notice">{message}</div>}
+
+      <form className="auth-form redeem-form" onSubmit={redeemVoucher}>
+        <label>
+          Redeem a voucher
+          <input
+            value={redeemCode}
+            onChange={(e) => setRedeemCode(e.target.value)}
+            placeholder="Enter the customer's 6-digit code"
+            required
+          />
+        </label>
+        {redeemMessage && <div className="notice">{redeemMessage}</div>}
+        {redeemError && <div className="notice notice-error">{redeemError}</div>}
+        <button className="btn-primary" type="submit">
+          Redeem
+        </button>
+      </form>
 
       {myShops.length === 0 ? (
         <p className="muted">You don't own any shops yet — ask an admin to assign one to your account.</p>

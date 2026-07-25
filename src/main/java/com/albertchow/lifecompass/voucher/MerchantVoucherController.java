@@ -2,8 +2,10 @@ package com.albertchow.lifecompass.voucher;
 
 import com.albertchow.lifecompass.common.Result;
 import com.albertchow.lifecompass.entity.Voucher;
+import com.albertchow.lifecompass.entity.VoucherOrder;
 import com.albertchow.lifecompass.security.UserContext;
 import com.albertchow.lifecompass.voucher.dto.CreateVoucherRequest;
+import com.albertchow.lifecompass.voucher.dto.RedeemVoucherRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,5 +59,13 @@ public class MerchantVoucherController {
     public Result<Voucher> setShelf(@PathVariable Long id, @RequestParam boolean onShelf) {
         Long merchantId = UserContext.require().id();
         return Result.ok(merchantVoucherService.setShelf(merchantId, id, onShelf));
+    }
+
+    /** Redeems a customer's voucher by the code shown on their order (QR + text), if the current merchant owns its shop. */
+    @Operation(summary = "Redeem a customer's voucher by its verification code")
+    @PostMapping("/redeem")
+    public Result<VoucherOrder> redeem(@Valid @RequestBody RedeemVoucherRequest request) {
+        Long merchantId = UserContext.require().id();
+        return Result.ok(merchantVoucherService.redeemByCode(merchantId, request.verifyCode()));
     }
 }

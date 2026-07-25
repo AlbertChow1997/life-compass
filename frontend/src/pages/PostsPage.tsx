@@ -22,6 +22,7 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<number | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -129,6 +130,7 @@ export default function PostsPage() {
       setContent('')
       setShopId('')
       setImageUrl(null)
+      setFormOpen(false)
       load()
     } catch (err) {
       setFormError(apiErrorMessage(err, 'Could not create post'))
@@ -161,7 +163,13 @@ export default function PostsPage() {
         </div>
       )}
 
-      {user ? (
+      {user && !formOpen && (
+        <button className="new-post-toggle" type="button" onClick={() => setFormOpen(true)}>
+          + Share a post
+        </button>
+      )}
+
+      {user && formOpen ? (
         <form className="auth-form new-post-form" onSubmit={submitPost}>
           <label>
             Title
@@ -182,29 +190,42 @@ export default function PostsPage() {
               ))}
             </select>
           </label>
-          <label>
-            Photo (optional)
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageChange} />
-          </label>
-          {uploading && <p className="muted">Uploading…</p>}
-          {imageUrl && (
-            <div className="image-preview">
-              <img src={imageUrl} alt="Upload preview" />
-              <button className="link-button" type="button" onClick={() => setImageUrl(null)}>
-                Remove photo
-              </button>
-            </div>
-          )}
+          <div className="photo-upload-row">
+            <input
+              id="post-photo-input"
+              className="photo-upload-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageChange}
+            />
+            <label htmlFor="post-photo-input" className="photo-upload-circle" aria-label="Upload a photo">
+              +
+            </label>
+            {uploading && <span className="muted">Uploading…</span>}
+            {imageUrl && (
+              <div className="image-preview">
+                <img src={imageUrl} alt="Upload preview" />
+                <button className="link-button" type="button" onClick={() => setImageUrl(null)}>
+                  Remove photo
+                </button>
+              </div>
+            )}
+          </div>
           {formError && <div className="notice notice-error">{formError}</div>}
-          <button className="btn-primary" type="submit" disabled={uploading}>
-            Share
-          </button>
+          <div className="new-post-form-footer">
+            <button className="link-button" type="button" onClick={() => setFormOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn-primary" type="submit" disabled={uploading}>
+              Share
+            </button>
+          </div>
         </form>
-      ) : (
+      ) : !user ? (
         <p className="muted">
           <Link to="/login">Sign in</Link> to share your own recommendation.
         </p>
-      )}
+      ) : null}
 
       {loading && <p className="muted">Loading…</p>}
       {error && <div className="notice">{error}</div>}

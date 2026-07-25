@@ -51,6 +51,7 @@ public class BlogService {
         blog.setContent(request.content());
         blog.setImages(request.images() != null ? request.images() : "");
         blog.setLiked(0);
+        blog.setLikedBase(0);
         blog.setComments(0);
         blog.setFeatured(0);
         blog.setStatus(1);
@@ -95,10 +96,17 @@ public class BlogService {
         return enrich(List.of(blog)).get(0);
     }
 
-    /** Toggles the current user's like on a post and keeps blog.liked in sync with the real count. */
+    /**
+     * Toggles the current user's like on a post and keeps blog.liked in sync
+     * with likedBase + the real blog_like row count — likedBase is a static
+     * baseline (e.g. seeded demo numbers) that real toggles add on top of
+     * rather than overwrite, so a post seeded with "24 likes" shows 25 after
+     * one real like instead of resetting to 1.
+     */
     @Transactional
     public LikeResponse toggleLike(Long blogId, Long userId) {
-        if (!isVisible(blogMapper.selectById(blogId))) {
+        Blog blog = blogMapper.selectById(blogId);
+        if (!isVisible(blog)) {
             throw new NotFoundException("Post not found");
         }
         BlogLike existing = likeMapper.selectOne(new LambdaQueryWrapper<BlogLike>()
@@ -114,13 +122,16 @@ public class BlogService {
             likeMapper.insert(like);
         }
 
-        long count = likeMapper.selectCount(new LambdaQueryWrapper<BlogLike>().eq(BlogLike::getBlogId, blogId));
+        long realCount = likeMapper.selectCount(new LambdaQueryWrapper<BlogLike>().eq(BlogLike::getBlogId, blogId));
+        int likedBase = blog.getLikedBase() != null ? blog.getLikedBase() : 0;
+        int newLiked = likedBase + (int) realCount;
+
         Blog patch = new Blog();
         patch.setId(blogId);
-        patch.setLiked((int) count);
+        patch.setLiked(newLiked);
         blogMapper.updateById(patch);
 
-        return new LikeResponse((int) count, nowLiked);
+        return new LikeResponse(newLiked, nowLiked);
     }
 
     /** A post counts as visible only if it exists and hasn't been soft-deleted (status == 1). */

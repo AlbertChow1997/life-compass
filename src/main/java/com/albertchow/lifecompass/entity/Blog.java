@@ -34,6 +34,9 @@ public class Blog {
 
     private Integer liked;
 
+    /** Baseline like count seeded for demo appeal, never touched by real toggles — {@code liked} is kept as this plus the real blog_like row count (see BlogService.toggleLike). */
+    private Integer likedBase;
+
     private Integer comments;
 
     /** 0 normal, 1 featured by admin. */

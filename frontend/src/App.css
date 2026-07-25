@@ -31,6 +31,10 @@
   object-fit: contain;
 }
 
+.brand-text {
+  margin-left: 8px;
+}
+
 .topbar-search {
   flex: 1 1 auto;
   min-width: 120px;
@@ -141,27 +145,6 @@
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.35));
 }
 
-.site-banner-brand {
-  position: absolute;
-  top: 14px;
-  left: 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-}
-
-.site-banner-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
-}
-
 .site-banner-text {
   position: absolute;
   inset: 0;
@@ -206,11 +189,14 @@
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-/* "Near me" chip with a small caret instead of a separate "5 km" box — the
-   caret is plain text in the button's own font (no mismatch with a native
-   <select>'s font rendering), and an invisible <select> sits on top of just
-   the caret so it still opens a real dropdown to pick the radius. Lives
-   inside .chips, right after "All" — see ShopListPage.tsx. */
+/* "Near me" chip + a small caret button that opens a custom dropdown (not a
+   native <select> — its open panel can't be styled consistently across
+   browsers). .near-me-control itself owns the pill shape (border-radius +
+   overflow: hidden) and both buttons are transparent/borderless inside it,
+   so the two click targets render as one seamless capsule instead of two
+   separate chips butted together. The dropdown below reuses the same
+   popover look as .user-dropdown for a consistent "app dropdown" style.
+   Lives inside .chips, right after "All" — see ShopListPage.tsx. */
 .near-me-control {
   position: relative;
   display: inline-flex;
@@ -218,50 +204,89 @@
   scroll-snap-align: start;
 }
 
-.near-me-btn {
+/* Owns the capsule shape + clipping — kept separate from .near-me-control
+   itself so that .radius-dropdown (a sibling, positioned absolutely relative
+   to .near-me-control) isn't clipped by this element's own overflow: hidden
+   when it opens. */
+.near-me-pill {
+  display: inline-flex;
+  align-items: stretch;
   border-radius: 999px;
-  padding-right: 30px;
+  background: var(--muted-bg);
+  overflow: hidden;
+}
+
+/* Doubled-up class beats the plain .chip rule's own border/background/
+   radius regardless of source order (equal-specificity rules resolve by
+   file order otherwise, which previously left this rendering as its own
+   full pill instead of merging with the caret). */
+.chip.near-me-btn {
+  border: none;
+  border-radius: 0;
+  background: transparent;
   white-space: nowrap;
 }
 
-.near-me-caret {
-  margin-left: 6px;
-  font-size: 10px;
-  opacity: 0.7;
+.chip.near-me-btn.chip-active {
+  background: var(--accent-gradient);
+  color: #fff;
 }
 
-.near-me-radius-select {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 28px;
-  height: 100%;
-  opacity: 0;
+.near-me-caret-btn {
+  display: flex;
+  align-items: center;
   border: none;
-  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 10px;
+  padding: 0 12px;
   cursor: pointer;
-  /* The select itself stays invisible (the caret is the visible trigger),
-     but browsers that support styling a native dropdown's open panel (e.g.
-     Chromium's <option> background/color support) still read these — so
-     the popup list, once opened, matches the app's font/colours instead of
-     the OS default. */
-  font: inherit;
-  font-size: 15px;
-  color: var(--text-h);
-  background: var(--surface);
 }
 
-.near-me-radius-select option {
-  font: inherit;
-  font-size: 15px;
-  padding: 8px 12px;
-  color: var(--text-h);
-  background: var(--surface);
-}
-
-.near-me-radius-select option:checked {
+.near-me-caret-btn:hover {
   color: var(--accent);
-  background: var(--accent-bg);
+}
+
+/* Positioned inline via style={{ top, left }} (see ShopListPage.tsx) since
+   it's rendered through a portal into document.body — .chips scrolls
+   horizontally, and per the CSS overflow spec that forces its vertical
+   overflow to clip too, so this can't be positioned/clipped relative to
+   .near-me-control any more. z-index is deliberately far above every other
+   layer in the app (sticky topbar: 10, other dropdowns: 20, support FAB: 50)
+   since a body-level portal competes with all of them directly. */
+.radius-dropdown {
+  min-width: 120px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.radius-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.radius-option:hover {
+  background: var(--muted-bg);
+  color: var(--accent);
+}
+
+.radius-option-active {
+  color: #fff;
+  background: var(--accent-gradient);
+  font-weight: 600;
 }
 
 .chip-clear {
@@ -738,6 +763,112 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface);
+}
+
+/* Collapsed state of the new-post form: a single row button, in the same
+   solid accent colour as the support-widget's "?" FAB (.support-fab) so the
+   app's two main floating/standalone action buttons read as one family. */
+.new-post-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  margin-bottom: 24px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-post-toggle:hover {
+  opacity: 0.9;
+}
+
+.new-post-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.photo-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.photo-upload-input {
+  /* Visually hidden but still focusable/clickable via the <label for>
+     below, which is what actually opens the file picker. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.photo-upload-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px dashed var(--border);
+  background: var(--muted-bg);
+  color: var(--text-h);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.photo-upload-circle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- voucher redemption: QR + code on a paid order, redeem form for merchants ---- */
+.order-card-clickable {
+  cursor: pointer;
+}
+
+.order-qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--muted-bg);
+  cursor: default;
+}
+
+.order-qr-panel img {
+  width: 160px;
+  height: 160px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+}
+
+.order-code {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--text-h);
+}
+
+.redeem-form {
+  max-width: 360px;
+  margin-bottom: 24px;
 }
 
 .rating-form {
@@ -1252,13 +1383,11 @@
     height: 120px;
   }
 
-  .site-banner-brand {
-    top: 10px;
-    left: 12px;
-    font-size: 13px;
-  }
-
   .site-banner-text {
     font-size: 22px;
+  }
+
+  .brand-text {
+    display: none;
   }
 }

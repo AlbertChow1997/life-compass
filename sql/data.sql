@@ -148,19 +148,23 @@ INSERT INTO `voucher` (`id`, `shop_id`, `title`, `sub_title`, `rules`, `pay_valu
 (22, 20, 'Gig + late bar combo',       'Entry plus late bar access',         'Over 21s only.',                           1000, 1500, 0, 0,   1, '2026-01-01 00:00:00', '2026-12-31 23:59:59');
 
 -- --- posts (blogs), several with images and/or a linked shop -----------------
-INSERT INTO `blog` (`id`, `user_id`, `shop_id`, `title`, `images`, `content`, `liked`, `comments`, `featured`, `status`) VALUES
-(1,  6,  1,    'A cosy dinner at Temple Bar Bistro',    '/images/posts/4.jpg', 'Went here on Saturday and the seafood chowder was unreal. Highly recommend booking ahead.', 24, 0, 1, 1),
-(2,  7,  8,    'Trad night at The Brazen Head',         '/images/posts/2.jpg', 'Ireland''s oldest pub still delivers. Great pint and even better music.', 51, 0, 1, 1),
-(3,  9,  NULL, 'My favourite cafes to work from',       '/images/posts/3.jpg', 'A quick roundup of Cork spots with good coffee and reliable wifi.', 12, 0, 0, 1),
-(4,  8,  2,    'Best seafood in Galway',                '/images/posts/5.jpg', 'Galway Bay Seafood does not miss. The chowder alone is worth the trip west.', 33, 0, 0, 1),
-(5,  10, 17,   'Live music weekend in Galway',          '/images/posts/7.jpg', 'Caught a trad session at Roisin Dubh — absolutely class atmosphere all night.', 40, 0, 1, 1),
-(6,  11, 13,   'Cork''s best bakery, hands down',        '/images/posts/6.jpg', 'The Bakehouse sourdough is the real deal. Get there early before it sells out.', 19, 0, 0, 1),
-(7,  12, 19,   'Big night out in Dublin',               '/images/posts/8.jpg', 'Coppers is exactly the chaos you''d expect and I loved every minute of it.', 27, 0, 0, 1),
-(8,  13, NULL, 'Weekend guide: Dublin on a budget',      '/images/posts/1.jpg', 'Free walking tours, cheap pints before 9pm, and the best chipper on Grafton St.', 15, 0, 0, 1),
-(9,  6,  6,    'Bewley''s never gets old',               '',                     'Still my go-to spot for scones and people-watching on Grafton St.', 8,  0, 0, 1),
-(10, 9,  10,   'Sunday session at The Long Valley',      '',                     'Toasted sandwich and a pint, what else do you need on a Sunday.', 11, 0, 0, 1),
-(11, 7,  15,   'Indie film night at Light House',        '',                     'Caught a brilliant Irish film here last week, great little cinema.', 6,  0, 0, 1),
-(12, 13, NULL, 'First month in Dublin: what I''ve learned', '/images/posts/1.jpg', 'From bus routes to the best coffee spots, here''s what surprised me most.', 21, 0, 0, 1);
+-- `liked` and `liked_base` start equal since there are no blog_like rows yet —
+-- liked_base is the permanent baseline that real likes/unlikes add on top of
+-- (see BlogService.toggleLike), so these demo counts survive real interaction
+-- instead of resetting to 1 on the first real like.
+INSERT INTO `blog` (`id`, `user_id`, `shop_id`, `title`, `images`, `content`, `liked`, `liked_base`, `comments`, `featured`, `status`) VALUES
+(1,  6,  1,    'A cosy dinner at Temple Bar Bistro',    '/images/posts/4.jpg', 'Went here on Saturday and the seafood chowder was unreal. Highly recommend booking ahead.', 24, 24, 0, 1, 1),
+(2,  7,  8,    'Trad night at The Brazen Head',         '/images/posts/2.jpg', 'Ireland''s oldest pub still delivers. Great pint and even better music.', 51, 51, 0, 1, 1),
+(3,  9,  NULL, 'My favourite cafes to work from',       '/images/posts/3.jpg', 'A quick roundup of Cork spots with good coffee and reliable wifi.', 12, 12, 0, 0, 1),
+(4,  8,  2,    'Best seafood in Galway',                '/images/posts/5.jpg', 'Galway Bay Seafood does not miss. The chowder alone is worth the trip west.', 33, 33, 0, 0, 1),
+(5,  10, 17,   'Live music weekend in Galway',          '/images/posts/7.jpg', 'Caught a trad session at Roisin Dubh — absolutely class atmosphere all night.', 40, 40, 0, 1, 1),
+(6,  11, 13,   'Cork''s best bakery, hands down',        '/images/posts/6.jpg', 'The Bakehouse sourdough is the real deal. Get there early before it sells out.', 19, 19, 0, 0, 1),
+(7,  12, 19,   'Big night out in Dublin',               '/images/posts/8.jpg', 'Coppers is exactly the chaos you''d expect and I loved every minute of it.', 27, 27, 0, 0, 1),
+(8,  13, NULL, 'Weekend guide: Dublin on a budget',      '/images/posts/1.jpg', 'Free walking tours, cheap pints before 9pm, and the best chipper on Grafton St.', 15, 15, 0, 0, 1),
+(9,  6,  6,    'Bewley''s never gets old',               '',                     'Still my go-to spot for scones and people-watching on Grafton St.', 8,  8,  0, 0, 1),
+(10, 9,  10,   'Sunday session at The Long Valley',      '',                     'Toasted sandwich and a pint, what else do you need on a Sunday.', 11, 11, 0, 0, 1),
+(11, 7,  15,   'Indie film night at Light House',        '',                     'Caught a brilliant Irish film here last week, great little cinema.', 6,  6,  0, 0, 1),
+(12, 13, NULL, 'First month in Dublin: what I''ve learned', '/images/posts/1.jpg', 'From bus routes to the best coffee spots, here''s what surprised me most.', 21, 21, 0, 0, 1);
 
 -- --- comments ------------------------------------------------------------
 INSERT INTO `blog_comment` (`user_id`, `blog_id`, `parent_id`, `answer_id`, `content`) VALUES
