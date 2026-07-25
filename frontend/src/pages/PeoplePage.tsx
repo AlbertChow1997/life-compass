@@ -2,6 +2,7 @@ import { useEffect, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { assetUrl } from '../format'
 import type { UserSummary } from '../types'
 
 /**
@@ -78,7 +79,7 @@ export default function PeoplePage() {
             <Link key={p.id} to={`/people/${p.id}`} className="card card-link">
               <div className="card-row">
                 {p.icon ? (
-                  <img className="avatar" src={p.icon} alt="" />
+                  <img className="avatar" src={assetUrl(p.icon)} alt="" />
                 ) : (
                   <span className="avatar avatar-fallback">{p.nickName.charAt(0).toUpperCase()}</span>
                 )}

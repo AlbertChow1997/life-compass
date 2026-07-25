@@ -1,5 +1,18 @@
 /** Small formatting helpers shared across pages, for values the backend sends in raw form. */
 
+/**
+ * Resolves backend-served assets such as /images/... and /uploads/... to the
+ * deployed backend/S3/CDN origin. Leave VITE_ASSET_BASE_URL empty in local dev
+ * so Vite's proxy keeps handling those root-relative URLs.
+ */
+export function assetUrl(path?: string | null): string {
+  if (!path) return ''
+  if (/^(https?:|data:|blob:)/.test(path)) return path
+  const base = import.meta.env.VITE_ASSET_BASE_URL
+  if (!base) return path
+  return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
+}
+
 /** Converts integer euro cents to a display string, e.g. 1250 -> "€12.50". Returns "—" when missing. */
 export function euro(cents?: number): string {
   if (cents == null) return '—'
@@ -15,7 +28,7 @@ export function stars(score: number): string {
 export function firstImage(images?: string): string | null {
   if (!images) return null
   const first = images.split(',')[0]?.trim()
-  return first || null
+  return first ? assetUrl(first) : null
 }
 
 /**

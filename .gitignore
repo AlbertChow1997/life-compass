@@ -35,3 +35,10 @@ build/
 ### VS Code ###
 .vscode/
 src/main/resources/application.yaml
+
+### Deployment secrets / generated backups ###
+.env
+.env.*
+!.env.ec2.example
+!frontend/.env.production.example
+backups/

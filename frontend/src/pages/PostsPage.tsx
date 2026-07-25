@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import type { Blog, Shop } from '../types'
 import { useAuth } from '../context/AuthContext'
-import { firstImage } from '../format'
+import { assetUrl, firstImage } from '../format'
 import PostComments from '../components/PostComments'
 
 type FeedFilter = 'all' | 'following'
@@ -204,7 +204,7 @@ export default function PostsPage() {
             {uploading && <span className="muted">Uploading…</span>}
             {imageUrl && (
               <div className="image-preview">
-                <img src={imageUrl} alt="Upload preview" />
+                <img src={assetUrl(imageUrl)} alt="Upload preview" />
                 <button className="link-button" type="button" onClick={() => setImageUrl(null)}>
                   Remove photo
                 </button>

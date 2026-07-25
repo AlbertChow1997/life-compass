@@ -1,0 +1,98 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: life-compass-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-lifecompass}
+      MYSQL_USER: ${DB_USERNAME:-lifecompass}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - life-compass
+
+  redis:
+    image: redis:7-alpine
+    container_name: life-compass-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - life-compass
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: life-compass-backend:latest
+    container_name: life-compass-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      PORT: 8080
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-lifecompass}
+      DB_USERNAME: ${DB_USERNAME:-lifecompass}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USE_SSL: ${DB_USE_SSL:-false}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      LIFECOMPASS_JWT_SECRET: ${LIFECOMPASS_JWT_SECRET}
+      LIFECOMPASS_CORS_ALLOWED_ORIGINS: ${LIFECOMPASS_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - life-compass
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: life-compass-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - backend
+    networks:
+      - life-compass
+
+volumes:
+  mysql-data:
+  redis-data:
+  uploads-data:
+
+networks:
+  life-compass:
+    driver: bridge

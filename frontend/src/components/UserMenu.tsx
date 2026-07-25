@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { levelBadge } from '../format'
+import { assetUrl, levelBadge } from '../format'
 import type { UserStats } from '../types'
 
 /**
@@ -63,7 +63,7 @@ export default function UserMenu() {
     <div className="user-menu" ref={menuRef}>
       <button className="user-trigger" type="button" onClick={() => setOpen((v) => !v)}>
         {user.icon ? (
-          <img className="avatar" src={user.icon} alt="" />
+          <img className="avatar" src={assetUrl(user.icon)} alt="" />
         ) : (
           <span className="avatar avatar-fallback">{user.nickName.charAt(0).toUpperCase()}</span>
         )}

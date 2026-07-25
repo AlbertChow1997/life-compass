@@ -1,6 +1,7 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { assetUrl } from '../format'
 import UserMenu from './UserMenu'
 
 /**
@@ -63,7 +64,7 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <NavLink to="/" className="brand" aria-label="LifeCompass home">
-        <img className="brand-mark" src="/images/favicon.ico" alt="" />
+        <img className="brand-mark" src={assetUrl('/images/favicon.ico')} alt="" />
         <span className="brand-text">LifeCompass</span>
       </NavLink>
       <input

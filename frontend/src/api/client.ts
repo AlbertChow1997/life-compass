@@ -3,11 +3,12 @@ import axios, { isAxiosError } from 'axios'
 /**
  * Central place for talking to the backend: a preconfigured axios instance plus
  * helpers for unwrapping the backend's standard response envelope and error messages.
- * Requests hit `/api/*`, which Vite proxies to the Spring Boot backend in development
- * (see vite.config.ts).
+ * Requests hit `/api/*` in local development, where Vite proxies them to the
+ * Spring Boot backend. In production, set VITE_API_BASE_URL to the deployed
+ * backend API root, e.g. https://api.example.com/api.
  */
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10_000,
 })
 

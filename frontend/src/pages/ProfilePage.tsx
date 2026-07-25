@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { assetUrl } from '../format'
 
 interface MeResponse {
   id: number
@@ -100,7 +101,7 @@ export default function ProfilePage() {
       <form className="auth-form" onSubmit={submit}>
         <div className="image-preview">
           {icon ? (
-            <img className="avatar avatar-large" src={icon} alt="Avatar" />
+            <img className="avatar avatar-large" src={assetUrl(icon)} alt="Avatar" />
           ) : (
             <span className="avatar avatar-fallback avatar-large">{nickName.charAt(0).toUpperCase()}</span>
           )}

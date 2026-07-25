@@ -2,8 +2,11 @@
 # or leave application.yaml as-is and set these as environment variables
 # before running the app — every value below already reads from one.
 #
-#   DB_USERNAME, DB_PASSWORD          - MySQL credentials
+#   DB_HOST, DB_PORT, DB_NAME         - MySQL/RDS connection target
+#   DB_USERNAME, DB_PASSWORD          - MySQL/RDS credentials
+#   REDIS_HOST, REDIS_PORT            - Redis/ElastiCache endpoint
 #   LIFECOMPASS_JWT_SECRET            - HMAC signing key for auth JWTs (32+ bytes)
+#   LIFECOMPASS_CORS_ALLOWED_ORIGINS  - comma-separated frontend origins allowed to call the API
 #   GOOGLE_CLIENT_ID                  - OAuth Web Client ID from Google Cloud Console
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 #                                      - leave unset in local dev; SMS codes are
@@ -11,7 +14,7 @@
 #   DEEPSEEK_API_KEY                  - leave unset to use only the keyword-matched
 #                                        FAQ + generic fallback for the support widget
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -19,14 +22,14 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/lifecompass?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:lifecompass}?useSSL=${DB_USE_SSL:false}&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   docker:
     compose:
@@ -56,3 +59,5 @@ lifecompass:
     from-number: ${TWILIO_FROM_NUMBER:}
   deepseek:
     api-key: ${DEEPSEEK_API_KEY:}
+  cors:
+    allowed-origins: ${LIFECOMPASS_CORS_ALLOWED_ORIGINS:http://localhost:5173}

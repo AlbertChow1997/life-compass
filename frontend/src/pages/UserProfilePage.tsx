@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, apiErrorMessage, type ApiResult } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { levelBadge } from '../format'
+import { assetUrl, levelBadge } from '../format'
 import type { Blog, UserProfile } from '../types'
 
 /**
@@ -89,7 +89,7 @@ export default function UserProfilePage() {
     <section className="page">
       <div className="profile-header">
         {profile.icon ? (
-          <img className="avatar avatar-large" src={profile.icon} alt="" />
+          <img className="avatar avatar-large" src={assetUrl(profile.icon)} alt="" />
         ) : (
           <span className="avatar avatar-fallback avatar-large">{profile.nickName.charAt(0).toUpperCase()}</span>
         )}
