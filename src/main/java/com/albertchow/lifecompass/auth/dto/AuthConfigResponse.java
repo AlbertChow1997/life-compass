@@ -6,5 +6,7 @@ package com.albertchow.lifecompass.auth.dto;
  */
 public record AuthConfigResponse(
         /** True if SMS provider credentials are set, so phone login/registration can be offered. */
-        boolean smsConfigured) {
+        boolean smsConfigured,
+        /** Public OAuth Web Client ID used by Google Identity Services in the browser. */
+        String googleClientId) {
 }

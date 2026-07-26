@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,12 +41,14 @@ public class AuthController {
     private final AuthService authService;
     private final UserMapper userMapper;
     private final TwilioSmsSender smsSender;
+    @Value("${lifecompass.google.client-id:}")
+    private String googleClientId;
 
-    /** Tells the frontend whether SMS login is available, so it can hide that option instead of exposing Twilio secrets. */
-    @Operation(summary = "Whether SMS login is live (Twilio configured) vs. dev-mode logging")
+    /** Tells the frontend which login providers are available, without exposing any secrets. */
+    @Operation(summary = "Public authentication configuration")
     @GetMapping("/config")
     public Result<AuthConfigResponse> config() {
-        return Result.ok(new AuthConfigResponse(smsSender.isConfigured()));
+        return Result.ok(new AuthConfigResponse(smsSender.isConfigured(), googleClientId));
     }
 
     /** Signs a user in (or registers them) using a Google ID token from the frontend's Google sign-in widget. */

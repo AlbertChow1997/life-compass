@@ -8,7 +8,7 @@ import type { LoginResponse } from '../types'
 type AccountType = 'user' | 'business'
 type PhoneStep = 'closed' | 'phone' | 'code'
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 /**
  * Sign-in page offering three independent auth methods: email/password (for
@@ -32,13 +32,20 @@ export default function LoginPage() {
 
   const googleScriptReady = useGoogleIdentityScript()
   const googleButtonRef = useRef<HTMLDivElement>(null)
+  const [googleClientId, setGoogleClientId] = useState(GOOGLE_CLIENT_ID)
 
   const [smsConfigured, setSmsConfigured] = useState<boolean | null>(null)
   useEffect(() => {
     api
-      .get<ApiResult<{ smsConfigured: boolean }>>('/auth/config')
-      .then((res) => setSmsConfigured(res.data.data?.smsConfigured ?? false))
-      .catch(() => setSmsConfigured(false))
+      .get<ApiResult<{ smsConfigured: boolean; googleClientId?: string }>>('/auth/config')
+      .then((res) => {
+        const config = res.data.data
+        setSmsConfigured(config?.smsConfigured ?? false)
+        if (!GOOGLE_CLIENT_ID && config?.googleClientId) setGoogleClientId(config.googleClientId)
+      })
+      .catch(() => {
+        setSmsConfigured(false)
+      })
   }, [])
 
   // Common finish for every login method: store the token, load the profile, go home.
@@ -61,9 +68,10 @@ export default function LoginPage() {
   // Renders Google's own button into googleButtonRef once its script has loaded.
   // Re-runs whenever the button becomes visible again (account type switch).
   useEffect(() => {
-    if (!googleScriptReady || !googleButtonRef.current || !GOOGLE_CLIENT_ID) return
+    if (!googleScriptReady || !googleButtonRef.current || !googleClientId) return
+    googleButtonRef.current.innerHTML = ''
     window.google!.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
+      client_id: googleClientId,
       callback: handleGoogleCredential,
     })
     window.google!.accounts.id.renderButton(googleButtonRef.current, {
@@ -75,7 +83,7 @@ export default function LoginPage() {
       width: Math.min(googleButtonRef.current.offsetWidth, 400),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountType, googleScriptReady])
+  }, [accountType, googleClientId, googleScriptReady])
 
   async function submitCredentials(e: FormEvent) {
     e.preventDefault()
@@ -176,10 +184,10 @@ export default function LoginPage() {
 
       <div className="alt-login">
         <div className="google-tab">
-          {!GOOGLE_CLIENT_ID && (
+          {!googleClientId && (
             <p className="muted">Google sign-in isn't configured in this environment yet.</p>
           )}
-          {GOOGLE_CLIENT_ID && !googleScriptReady && <p className="muted">Loading Google Sign-In…</p>}
+          {googleClientId && !googleScriptReady && <p className="muted">Loading Google Sign-In…</p>}
           <div ref={googleButtonRef} />
         </div>
 
