@@ -7,7 +7,19 @@
  */
 export function assetUrl(path?: string | null): string {
   if (!path) return ''
-  if (/^(https?:|data:|blob:)/.test(path)) return path
+  if (/^(data:|blob:)/.test(path)) return path
+  if (/^https?:/.test(path)) {
+    try {
+      const url = new URL(path)
+      const isBackendAsset = url.pathname.startsWith('/images/') || url.pathname.startsWith('/uploads/')
+      if (isBackendAsset && typeof window !== 'undefined' && window.location.protocol === 'https:') {
+        return `${url.pathname}${url.search}${url.hash}`
+      }
+    } catch {
+      return path
+    }
+    return path
+  }
   const base = import.meta.env.VITE_ASSET_BASE_URL
   if (!base) return path
   return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`
