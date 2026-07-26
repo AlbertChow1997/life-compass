@@ -11,6 +11,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "http://35.177.65.205/uploads/:path*"
+    },
+    {
+      "source": "/((?!api|images|uploads).*)",
+      "destination": "/index.html"
     }
   ]
 }
