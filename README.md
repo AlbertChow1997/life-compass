@@ -4,6 +4,7 @@ A local entertainment & dining directory for the Irish market — users browse a
 shops, buy vouchers, and post recommendations; merchants manage their own vouchers;
 admins moderate content. Backend is Spring Boot, frontend is React 19 + Vite. All UI
 text and stored data are in English.
+Link: https://life-compass-rust-ten.vercel.app/
 
 ## Contents
 
